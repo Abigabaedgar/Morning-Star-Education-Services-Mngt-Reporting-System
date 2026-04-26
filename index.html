@@ -2378,26 +2378,7 @@ function downloadTemplateCustom(){
 // getImportLog / saveImportLog replaced by Supabase + CACHE
 
 function addImportLogEntry(entries){
-  // entries: [{cls, term, termLabel, students, newCount, updateCount, year}]
-  const log = CACHE.importLog || [];
-  const now = new Date();
-  entries.forEach(e => {
-    log.unshift({
-      cls:         e.cls,
-      term:        e.term,
-      termLabel:   e.termLabel,
-      students:    e.students,
-      newCount:    e.newCount,
-      updateCount: e.updateCount,
-      year:        e.year,
-      timestamp:   now.toISOString(),
-      dateStr:     now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
-      timeStr:     now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
-    });
-  });
-  // Keep last 100 entries
-  saveImportLog(log.slice(0,100));
-  renderImportLog();
+  // no-op — Supabase handles log via impConfirm directly
 }
 
 async function clearImportLog(){
