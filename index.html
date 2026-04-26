@@ -624,7 +624,13 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
           <div class="card-header">
             <div class="card-title">Generate Report Card</div>
           </div>
-          <div class="form-grid form-grid-3">
+          <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:14px">
+            <div class="form-group">
+              <label>Class</label>
+              <select id="rep-class" onchange="filterReportStudents()">
+                <option value="">All classes</option>
+              </select>
+            </div>
             <div class="form-group">
               <label>Student</label>
               <select id="rep-student" onchange="renderReportCard()">
@@ -747,7 +753,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
           </div>
         </div>
 
-        <div class="card" style="max-width:900px">
+        <div class="card">
           <div class="card-header">
             <div class="card-title">📥 Upload Assessment File</div>
             <button class="btn btn-gold btn-sm" onclick="openTemplateModal()">⬇ Download Template</button>
@@ -793,6 +799,23 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
           <div id="imp-actions" style="display:none;margin-top:16px;display:none;gap:10px;flex-wrap:wrap">
             <button class="btn btn-success" id="imp-confirm-btn" onclick="impConfirm()">✅ Confirm Import</button>
             <button class="btn" onclick="impReset()">↩ Upload different file</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:20px">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📋 Import History</div>
+              <div class="card-sub">Every upload logged — see which classes are done and which are pending</div>
+            </div>
+            <button class="btn btn-sm" style="color:var(--red);font-size:12px" onclick="clearImportLog()">Clear log</button>
+          </div>
+          <div id="import-log-area">
+            <div class="empty-state" style="padding:30px">
+              <div class="empty-icon">📭</div>
+              <div class="empty-text">No imports yet</div>
+              <div class="empty-sub">Upload your first assessment file to see history here</div>
+            </div>
           </div>
         </div>
 
@@ -868,42 +891,81 @@ function sbHeaders(extra={}){
   return h;
 }
 
+async function refreshSession(){
+  const refreshToken = localStorage.getItem('mses_sb_refresh');
+  if(!refreshToken){ doLogout(); return false; }
+  try {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: {'apikey': SUPABASE_ANON, 'Content-Type': 'application/json'},
+      body: JSON.stringify({refresh_token: refreshToken})
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error('Refresh failed');
+    SB_TOKEN = data.access_token;
+    localStorage.setItem('mses_sb_token', SB_TOKEN);
+    if(data.refresh_token) localStorage.setItem('mses_sb_refresh', data.refresh_token);
+    return true;
+  } catch(e){
+    doLogout();
+    return false;
+  }
+}
+
+// Wrapper that auto-refreshes on 401/403
+async function sbFetch(url, options){
+  let r = await fetch(url, options);
+  if(r.status === 401 || r.status === 403){
+    const refreshed = await refreshSession();
+    if(refreshed){
+      // Retry with new token
+      options.headers = {...options.headers, 'Authorization': 'Bearer ' + SB_TOKEN};
+      r = await fetch(url, options);
+    }
+  }
+  return r;
+}
+
 async function sbGet(table, params=''){
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, {headers: sbHeaders()});
+  const url = `${SUPABASE_URL}/rest/v1/${table}?${params}`;
+  const opts = {headers: sbHeaders()};
+  const r = await sbFetch(url, opts);
   if(!r.ok){ const e=await r.text(); throw new Error(e); }
   return r.json();
 }
 
 async function sbInsert(table, body){
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-    method:'POST', headers: sbHeaders(), body: JSON.stringify(body)
-  });
+  const url = `${SUPABASE_URL}/rest/v1/${table}`;
+  const opts = {method:'POST', headers: sbHeaders(), body: JSON.stringify(body)};
+  const r = await sbFetch(url, opts);
   if(!r.ok){ const e=await r.text(); throw new Error(e); }
   return r.json();
 }
 
 async function sbUpdate(table, id, body){
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-    method:'PATCH', headers: sbHeaders(), body: JSON.stringify(body)
-  });
+  const url = `${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`;
+  const opts = {method:'PATCH', headers: sbHeaders(), body: JSON.stringify(body)};
+  const r = await sbFetch(url, opts);
   if(!r.ok){ const e=await r.text(); throw new Error(e); }
   return r.json();
 }
 
 async function sbDelete(table, id){
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-    method:'DELETE', headers: sbHeaders()
-  });
+  const url = `${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`;
+  const opts = {method:'DELETE', headers: sbHeaders()};
+  const r = await sbFetch(url, opts);
   if(!r.ok){ const e=await r.text(); throw new Error(e); }
   return true;
 }
 
 async function sbUpsert(table, body, onConflict){
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?on_conflict=${onConflict}`, {
+  const url = `${SUPABASE_URL}/rest/v1/${table}?on_conflict=${onConflict}`;
+  const opts = {
     method:'POST',
     headers: sbHeaders({'Prefer':'resolution=merge-duplicates,return=representation'}),
     body: JSON.stringify(body)
-  });
+  };
+  const r = await sbFetch(url, opts);
   if(!r.ok){ const e=await r.text(); throw new Error(e); }
   return r.json();
 }
@@ -927,6 +989,7 @@ async function doLogin(){
     SB_TOKEN = data.access_token;
     localStorage.setItem('mses_sb_token', SB_TOKEN);
     localStorage.setItem('mses_sb_email', email);
+    if(data.refresh_token) localStorage.setItem('mses_sb_refresh', data.refresh_token);
     showApp(email);
   } catch(e){
     err.textContent = e.message; err.style.display = 'block';
@@ -938,6 +1001,7 @@ function doLogout(){
   SB_TOKEN = null;
   localStorage.removeItem('mses_sb_token');
   localStorage.removeItem('mses_sb_email');
+  localStorage.removeItem('mses_sb_refresh');
   document.getElementById('app-shell').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-email').value = '';
@@ -2215,129 +2279,198 @@ function impBuildPreview(){
 }
 
 async function impConfirm(){
-  const term = document.getElementById('imp-term').value;
-  const year = document.getElementById('imp-year').value || '2026';
-  const teacherOverride = document.getElementById('imp-teacher')?.value?.trim()||'';
-
-  let newStudents = 0, updatedScores = 0;
-
-  const TERM_STORE = {
-    midterm:'midterm',midterm2:'midterm',midterm3:'midterm',
-    bot:'bot',end:'end',end1:'end',end2:'end',end3:'end'
+  const term          = document.getElementById('imp-term').value;
+  const year          = document.getElementById('imp-year').value || '2026';
+  const teacherOverride = document.getElementById('imp-teacher')?.value?.trim() || '';
+  const TERM_STORE    = {
+    midterm:'midterm', midterm2:'midterm', midterm3:'midterm',
+    bot:'bot', end:'end', end1:'end', end2:'end', end3:'end'
   };
-  const termStore = TERM_STORE[term]||term;
+  const IMP_TERM_LABELS = {
+    midterm:'Midterm', bot:'BOT',
+    end:'End of Term', end1:'End of Term 1', end2:'End of Term 2', end3:'End of Term 3'
+  };
+  const termStore  = TERM_STORE[term] || term;
+  const termLabel  = IMP_TERM_LABELS[term] || term;
+  let totalNew = 0, totalUpd = 0;
 
   try {
-    // Reload fresh student list from Supabase before import to avoid stale cache
-    const freshStudents = await sbGet('students','');
+    // Step 1: Load ALL existing students fresh from Supabase into a lookup map
+    const freshStudents = await sbGet('students', 'order=id');
     CACHE.students = freshStudents || [];
+
+    // Build lookup: "FNAME|LNAME|CLS" -> student object
+    const lookup = {};
+    CACHE.students.forEach(st => {
+      const key = `${st.fname.trim().toUpperCase()}|${st.lname.trim().toUpperCase()}|${st.cls}`;
+      lookup[key] = st;
+    });
 
     for(const cls of impParsedClasses){
       const clsTeacher = teacherOverride || getTeacherForClass(cls.cls) || '';
       let clsNew = 0, clsUpd = 0;
 
+      // Collect all students to insert in bulk (avoids per-student round trips)
+      const toInsert = [];
+      const toScore  = [];
+
       for(const s of cls.students){
         if(!s.fname && !s.lname) continue;
+        const fn  = s.fname.trim().toUpperCase();
+        const ln  = s.lname.trim().toUpperCase();
+        const key = `${fn}|${ln}|${cls.cls}`;
 
-        // Find existing student in fresh cache (match by fname+lname+cls)
-        let existing = CACHE.students.find(e =>
-          e.cls === cls.cls &&
-          e.fname.trim().toUpperCase() === s.fname.trim().toUpperCase() &&
-          e.lname.trim().toUpperCase() === s.lname.trim().toUpperCase()
-        );
-
-        if(!existing){
-          // Double-check Supabase directly to prevent race-condition duplicates
-          const check = await sbGet('students',
-            `fname=eq.${encodeURIComponent(s.fname)}&lname=eq.${encodeURIComponent(s.lname)}&cls=eq.${cls.cls}`);
-          if(check && check.length > 0){
-            existing = check[0];
-            CACHE.students.push(existing);
-          } else {
-            const rows = await sbInsert('students', {
-              fname:s.fname.trim().toUpperCase(),
-              lname:s.lname.trim().toUpperCase(),
-              cls:cls.cls, paycode:'', teacher:clsTeacher, year, notes:''
-            });
-            const data = Array.isArray(rows)?rows[0]:rows;
-            CACHE.students.push(data);
-            existing = data;
-            newStudents++;
-            clsNew++;
-          }
-        } else {
-          updatedScores++;
-          clsUpd++;
+        if(!lookup[key]){
+          toInsert.push({
+            fname: fn, lname: ln, cls: cls.cls,
+            paycode: '', teacher: clsTeacher, year, notes: ''
+          });
         }
-
-        // Upsert scores
-        const scoreRows = Object.entries(s.scores).map(([subject,score])=>({
-          student_id:existing.id, term:termStore, year, subject, score:parseFloat(score)
-        }));
-        if(scoreRows.length){
-          await sbUpsert('scores', scoreRows, 'student_id,term,year,subject');
-          // update cache
-          if(!CACHE.scores[existing.id]) CACHE.scores[existing.id]={};
-          const k = termStore+'|'+year;
-          if(!CACHE.scores[existing.id][k]) CACHE.scores[existing.id][k]={};
-          scoreRows.forEach(r => CACHE.scores[existing.id][k][r.subject]=r.score);
-          updatedScores++;
-        }
+        toScore.push({fname: fn, lname: ln, scores: s.scores});
       }
 
-      // Log the import per class
+      // Bulk insert new students
+      if(toInsert.length > 0){
+        const inserted = await sbInsert('students', toInsert);
+        const rows = Array.isArray(inserted) ? inserted : [inserted];
+        rows.forEach(r => {
+          const key = `${r.fname.trim().toUpperCase()}|${r.lname.trim().toUpperCase()}|${r.cls}`;
+          lookup[key] = r;
+          CACHE.students.push(r);
+          clsNew++;
+          totalNew++;
+        });
+      }
+
+      // Upsert scores for all students in this class
+      const scoreRows = [];
+      for(const s of toScore){
+        const key = `${s.fname}|${s.lname}|${cls.cls}`;
+        const student = lookup[key];
+        if(!student){ continue; }
+        if(!lookup[key+'__counted']){
+          clsUpd++;
+          totalUpd++;
+          lookup[key+'__counted'] = true;
+        }
+        Object.entries(s.scores).forEach(([subject, score]) => {
+          scoreRows.push({
+            student_id: student.id,
+            term: termStore, year, subject,
+            score: parseFloat(score)
+          });
+        });
+      }
+
+      if(scoreRows.length > 0){
+        await sbUpsert('scores', scoreRows, 'student_id,term,year,subject');
+        // Update local score cache
+        scoreRows.forEach(r => {
+          if(!CACHE.scores[r.student_id]) CACHE.scores[r.student_id] = {};
+          const k = r.term+'|'+r.year;
+          if(!CACHE.scores[r.student_id][k]) CACHE.scores[r.student_id][k] = {};
+          CACHE.scores[r.student_id][k][r.subject] = r.score;
+        });
+      }
+
+      // Log this class import
       await sbInsert('import_log', {
-        cls:cls.cls, term:termStore,
-        term_label:{midterm:'Midterm',bot:'BOT',end:'End of Term',end1:'End of Term 1',end2:'End of Term 2',end3:'End of Term 3'}[term]||term,
-        year, students:cls.students.length, new_count:clsNew, update_count:clsUpd
+        cls: cls.cls, term: termStore, term_label: termLabel,
+        year, students: cls.students.length,
+        new_count: clsNew, update_count: clsUpd - clsNew
       });
     }
 
     // Refresh import log cache
-    const newLog = await sbGet('import_log','order=created_at.desc&limit=100');
-    CACHE.importLog = (newLog||[]).map(r=>({...r,
-      dateStr:new Date(r.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
-      timeStr:new Date(r.created_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
+    const newLog = await sbGet('import_log', 'order=created_at.desc&limit=100');
+    CACHE.importLog = (newLog||[]).map(r => ({
+      ...r,
+      dateStr: new Date(r.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
+      timeStr: new Date(r.created_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
     }));
 
-  } catch(e){
-    showAlert('Import failed: '+e.message,'danger'); return;
+  } catch(err){
+    showAlert('Import failed: ' + err.message, 'danger');
+    console.error('Import error:', err);
+    return;
   }
 
-  const termLabelMap = {midterm:'Midterm',bot:'BOT',end:'End of Term'};
-  const termLabel = termLabelMap[term] || term;
+  const termLabelMap = {midterm:'Midterm', bot:'BOT', end:'End of Term'};
+  showAlert(`✅ Import complete: ${totalNew} new students, ${totalUpd} score records saved (${termLabel}).`);
 
-  // Build per-class log entries
-  const logEntries = impParsedClasses.map(cls => {
-    let nc=0, uc=0;
-    cls.students.forEach(s => {
-      const exists = DB.students.find(e => e.cls===cls.cls && e.lname===s.lname && e.fname===s.fname);
-      if(exists) uc++; else nc++;
-    });
-    return {cls:cls.cls, term, termLabel, students:cls.students.length, newCount:nc, updateCount:uc, year};
-  });
-  addImportLogEntry(logEntries);
-
-  showAlert(`✅ Import complete: ${newStudents} new students added, ${updatedScores} score records saved (${termLabel}).`);
-
-  // Refresh everything
+  // Refresh UI
+  CACHE.students = await sbGet('students','order=lname');
   populateScoreStudentDropdown();
   populateReportDropdown();
   renderDashboard();
+  renderImportLog();
+function impBuildPreview(){
+  const term = document.getElementById('imp-term').value;
+  const termLabel = {midterm:'Midterm',bot:'BOT',end:'End of Term'}[term];
+  const area = document.getElementById('imp-preview-area');
 
-  // Show success summary
-  document.getElementById('imp-preview-area').innerHTML = `
-    <div class="alert alert-success" style="font-size:14px">
-      ✅ <strong>Import successful!</strong><br>
-      <span style="font-size:13px">
-        ${newStudents} new students added · ${updatedScores} score records saved · Term: ${termLabel}<br>
-        Go to <a href="#" onclick="showPage('students',document.querySelector('.nav-item:nth-child(2))');return false;" style="color:var(--navy);font-weight:600">Students</a> or
-        <a href="#" onclick="showPage('reports',document.querySelector('.nav-item:nth-child(4))');return false;" style="color:var(--navy);font-weight:600">Report Cards</a> to view results.
-      </span>
+  let html = `<div class="section-title-text" style="margin-bottom:12px">PREVIEW — ${impParsedClasses.length} class${impParsedClasses.length>1?'es':''} detected · ${termLabel}</div>`;
+
+  impParsedClasses.forEach(cls => {
+    // Match against existing students
+    let newCount = 0, updateCount = 0;
+    cls.students.forEach(s => {
+      const existing = DB.students.find(e =>
+        e.cls === cls.cls &&
+        e.lname === s.lname &&
+        e.fname === s.fname
+      );
+      if(existing) updateCount++;
+      else newCount++;
+    });
+
+    html += `
+    <div class="card" style="margin-bottom:14px;padding:0">
+      <div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+        <span class="badge badge-navy" style="font-size:13px">${cls.cls}</span>
+        <span style="font-weight:600">${cls.students.length} students</span>
+        <span style="color:var(--text-muted);font-size:12px">Subjects: ${cls.subjects.join(', ')}</span>
+        <span style="margin-left:auto;display:flex;gap:6px">
+          ${newCount > 0 ? `<span class="badge badge-d1">+${newCount} new</span>` : ''}
+          ${updateCount > 0 ? `<span class="badge badge-d2">↻ ${updateCount} update</span>` : ''}
+        </span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Name</th>
+            ${cls.subjects.map(s=>`<th style="text-align:center">${s.replace('Religious Education','RE').replace('Mathematics','Math').replace('Social Studies','SST')}</th>`).join('')}
+            <th style="text-align:center">Total</th>
+            <th>Status</th>
+          </tr></thead>
+          <tbody>
+            ${cls.students.map((s,i) => {
+              const existing = DB.students.find(e => e.cls===cls.cls && e.lname===s.lname && e.fname===s.fname);
+              const total = Object.values(s.scores).reduce((a,b)=>a+b,0);
+              const status = existing
+                ? '<span class="badge" style="background:#e8f4fd;color:#1a5490">↻ Update</span>'
+                : '<span class="badge badge-d1">+ New</span>';
+              return `<tr>
+                <td class="td-muted">${i+1}</td>
+                <td class="td-name">${s.lname} ${s.fname}</td>
+                ${cls.subjects.map(sub => `<td style="text-align:center">${s.scores[sub]!==undefined ? s.scores[sub] : '<span style="color:var(--text-light)">—</span>'}</td>`).join('')}
+                <td style="text-align:center;font-weight:700">${total}</td>
+                <td>${status}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
     </div>`;
-  document.getElementById('imp-actions').style.display = 'none';
-  impParsedClasses = [];
+  });
+
+  area.innerHTML = html;
+
+  // Show action buttons
+  const act = document.getElementById('imp-actions');
+  act.style.display = 'flex';
 }
+
 
 // ══════════════════════════════════════════
 //  TEMPLATE DOWNLOAD (dynamic term labelling via SheetJS)
@@ -2480,9 +2613,9 @@ function renderImportLog(){
   const clsOrder = ['JY1','JY2','JY3','JY4','JY5','JY6','KY1','KY2','KY3'];
   const uploadedClasses = [...new Set(log.map(e=>e.cls))].sort((a,b)=>clsOrder.indexOf(a)-clsOrder.indexOf(b));
 
-  let summaryHtml = `<div style="padding:14px 18px;border-bottom:1px solid var(--border)">
-    <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Classes uploaded this session</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">`;
+  let summaryHtml = `<div style="padding:14px 18px;border-bottom:1px solid var(--border);overflow-x:auto">
+    <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Classes uploaded — MT · BOT · EOT status</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;min-width:0">`;
 
   clsOrder.forEach(cls => {
     const s = statusMap[cls] || {};
@@ -2505,7 +2638,7 @@ function renderImportLog(){
   </div>`;
 
   // Log table
-  let tableHtml = `<div class="table-wrap"><table>
+  let tableHtml = `<div class="table-wrap" style="overflow-x:auto"><table style="min-width:600px">
     <thead><tr>
       <th>When</th><th>Class</th><th>Term</th><th>Year</th>
       <th style="text-align:center">Students</th>
@@ -2536,24 +2669,7 @@ function renderImportLog(){
 }
 
 
-</script>
+
+}</script>
 </body>
 </html>
-        <div class="card" style="max-width:900px;margin-top:20px">
-          <div class="card-header">
-            <div>
-              <div class="card-title">📋 Import History</div>
-              <div class="card-sub">Every upload logged here — so you know which classes are done</div>
-            </div>
-            <button class="btn btn-sm" onclick="clearImportLog()" style="color:var(--red)">Clear log</button>
-          </div>
-          <div id="import-log-area">
-            <div class="empty-state" style="padding:30px">
-              <div class="empty-icon">📭</div>
-              <div class="empty-text">No imports yet</div>
-              <div class="empty-sub">Upload your first assessment file to see history here</div>
-            </div>
-          </div>
-        </div>
-
-
