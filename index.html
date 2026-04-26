@@ -1639,7 +1639,7 @@ function buildReportHTML(studentId, term){
         <div style="font-weight:600;margin-bottom:6px;font-size:12px">Classteacher's comment:</div>
         <div style="font-style:italic;font-size:11px;color:var(--text-muted)">${teacherComment}</div>
         <div class="report-footer-grid" style="margin-top:0;grid-template-columns:1fr">
-          <div class="sig-line">CLASS TEACHER: ${student.teacher||'—'}</div>
+          <div class="sig-line">CLASS TEACHER: ${getTeacherForClass(student.cls)||student.teacher||'—'}</div>
         </div>
       </div>
       <div>
