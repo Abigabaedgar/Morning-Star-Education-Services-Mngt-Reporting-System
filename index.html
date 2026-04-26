@@ -711,7 +711,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <div class="form-group">
               <label>Year</label>
               <select id="rep-year" onchange="renderReportCard()">
-                <option>2026</option><option>2025</option><option>2027</option>
+                <option value="2026">2026</option><option value="2025">2025</option><option value="2027">2027</option>
               </select>
             </div>
           </div>
@@ -746,7 +746,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <div class="form-group">
               <label>Year</label>
               <select id="bulk-year">
-                <option>2026</option><option>2025</option><option>2027</option>
+                <option value="2026">2026</option><option value="2025">2025</option><option value="2027">2027</option>
               </select>
             </div>
           </div>
@@ -1818,7 +1818,7 @@ function renderStudentsTable(){
       <td><span class="td-name">${s.fname} ${s.lname}</span><br><span class="td-muted">${s.notes||''}</span></td>
       <td><span class="badge badge-navy">${s.cls}</span></td>
       <td class="td-muted">${s.paycode||'—'}</td>
-      <td class="td-muted">${s.teacher||'—'}</td>
+      <td class="td-muted">${getTeacherForClass(s.cls) || s.teacher || '—'}</td>
       <td>${totHtml}</td>
       <td>${divHtml}</td>
       <td>
@@ -2193,8 +2193,7 @@ async function renderReportCard(){
     return;
   }
   area.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">Loading scores...</div></div>';
-  // Force reload scores from Supabase (don't use cache)
-  delete CACHE.scores[sid];
+  // Load scores if not already in cache — never wipe existing cache on term/year switch
   await loadScoresForStudent(sid);
   currentReportStudentId = sid;
   // Check if student has any scores for selected term/year
@@ -2205,10 +2204,11 @@ async function renderReportCard(){
   if(repYearEl2 && sid){
     const studentScores = CACHE.scores[sid] || {};
     [...repYearEl2.options].forEach(opt => {
-      const hasData = Object.keys(studentScores).some(k =>
-        k.startsWith(term+'|') && k.endsWith('|'+opt.value) || k === term+'|'+opt.value
-      );
-      opt.text = opt.value + (hasData ? ' ✓' : '');
+      const yr = opt.value;  // always read the explicit value attribute
+      const hasData = !!studentScores[term+'|'+yr];
+      // Update display text but preserve value attribute
+      opt.text = yr + (hasData ? ' ✓' : '');
+      // value attribute is untouched since it was set explicitly in HTML
     });
   }
 
