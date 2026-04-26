@@ -496,15 +496,15 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 
     <div class="sidebar-section">
       <div class="sidebar-label">Tools</div>
-      <a class="nav-item" onclick="showPage('classes',this)">
+      <a class="nav-item" onclick="showPage('classes',this)" id="nav-classes">
         <span class="nav-icon">🏫</span>
         <span>Classes</span>
       </a>
-      <a class="nav-item" onclick="showPage('import',this)">
+      <a class="nav-item" onclick="showPage('import',this)" id="nav-import">
         <span class="nav-icon">📥</span>
         <span>Import Scores</span>
       </a>
-      <a class="nav-item" onclick="showPage('promotions',this)">
+      <a class="nav-item" onclick="showPage('promotions',this)" id="nav-promotions">
         <span class="nav-icon">🎓</span>
         <span>Promotions</span>
       </a>
@@ -516,7 +516,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
         <span class="nav-icon">🪪</span>
         <span>Payment Codes</span>
       </a>
-      <a class="nav-item" onclick="showPage('settings',this)">
+      <a class="nav-item" onclick="showPage('settings',this)" id="nav-settings">
         <span class="nav-icon">⚙</span>
         <span>Settings</span>
       </a>
@@ -1270,19 +1270,33 @@ function canEdit(){ return isAdmin(); }   // only admin edits scores/imports/etc
 // ── Apply role-based UI restrictions ─────────────────────────────────────────
 function applyRoleUI(){
   const role = getRole();
-  const adminOnly   = document.querySelectorAll('[data-role="admin"]');
-  const nonTeacher  = document.querySelectorAll('[data-role="non-teacher"]');
-  adminOnly.forEach(el => el.style.display = role==='admin' ? '' : 'none');
-  nonTeacher.forEach(el => el.style.display = role==='teacher' ? 'none' : '');
 
-  // Hide nav items based on role
-  const navItems = {
-    'nav-users':     ['admin'],
-    'nav-paycodes':  ['admin'],
+  // Nav items: which roles can see each page
+  const navAccess = {
+    'nav-classes':    ['admin'],
+    'nav-import':     ['admin'],
+    'nav-promotions': ['admin'],
+    'nav-settings':   ['admin'],
+    'nav-users':      ['admin'],
+    'nav-paycodes':   ['admin'],
   };
-  Object.entries(navItems).forEach(([id, roles]) => {
+  Object.entries(navAccess).forEach(([id, allowed]) => {
     const el = document.getElementById(id);
-    if(el) el.style.display = roles.includes(role) ? '' : 'none';
+    if(el) el.style.display = allowed.includes(role) ? '' : 'none';
+  });
+
+  // Hide the "Tools" sidebar section label entirely for non-admins
+  // (find it by checking sidebar-label text)
+  document.querySelectorAll('.sidebar-label').forEach(el => {
+    if(el.textContent.trim() === 'Tools'){
+      // Check if all nav items in its section are hidden
+      const section = el.closest('.sidebar-section');
+      if(section){
+        const visibleItems = [...section.querySelectorAll('.nav-item')]
+          .filter(n => n.style.display !== 'none');
+        el.style.display = visibleItems.length ? '' : 'none';
+      }
+    }
   });
 
   // Show/hide topbar import button
@@ -1292,6 +1306,23 @@ function applyRoleUI(){
   // Sidebar user label
   const lbl = document.getElementById('sidebar-user-email');
   if(lbl && SESSION) lbl.textContent = SESSION.name + ' · ' + SESSION.role;
+
+  // For teachers: restrict student/report dropdowns to assigned class
+  if(isTeacher() && SESSION?.assigned_class){
+    const cls = SESSION.assigned_class;
+    // Lock class filters to assigned class
+    ['student-class-filter','rep-class','bulk-class','scores-class-filter'].forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      // Set value and disable
+      el.value = cls;
+      el.disabled = true;
+    });
+    // Trigger re-renders with the locked class
+    renderStudentsTable();
+    renderScoresPage();
+    populateReportDropdown();
+  }
 }
 
 // ── Chunk array into batches ─────────────────────────────────────────────────
@@ -1532,12 +1563,9 @@ async function loadScoresForStudent(studentId){
 
 function getCachedScores(studentId, term, year){
   const scores = CACHE.scores[studentId] || {};
-  // Try exact year first, then fall back to any year with data for that term
+  // Exact match only — never leak scores from a different year
   const exactKey = term+'|'+(year||'2026');
-  if(scores[exactKey]) return scores[exactKey];
-  // Find any key matching this term
-  const termKey = Object.keys(scores).find(k => k.startsWith(term+'|'));
-  return termKey ? scores[termKey] : {};
+  return scores[exactKey] || {};
 }
 
 // ══════════════════════════════════════════
@@ -1656,12 +1684,19 @@ function showPage(name, navEl){
   }
   if(name==='students') renderStudentsTable();
   if(name==='scores') renderScoresPage();
+  // Restrict non-admin pages
+  const adminOnlyPages = ['import','classes','promotions','settings','users','paycodes'];
+  if(adminOnlyPages.includes(name) && !isAdmin()){
+    showAlert('Access denied — admin only.', 'danger');
+    showPage('dashboard', document.querySelector('.nav-item'));
+    return;
+  }
   if(name==='import') renderImportLog();
   if(name==='reports') populateReportDropdown();
   if(name==='settings') populateSettingsForm();
   if(name==='promotions') { renderPromotionDropdowns(); renderPromotionList(); }
-  if(name==='users') { if(isAdmin()) renderUsersPage(); else showAlert('Access denied.','danger'); }
-  if(name==='paycodes') { if(isAdmin()) renderPaycodesTable(); else showAlert('Access denied.','danger'); }
+  if(name==='users') renderUsersPage();
+  if(name==='paycodes') renderPaycodesTable();
 }
 
 // ══════════════════════════════════════════
@@ -2003,26 +2038,37 @@ function populateReportDropdown(){
   ['rep-year','bulk-year'].forEach(id => {
     const el = document.getElementById(id);
     if(!el) return;
-    // Add year to options if not present
     if(![...el.options].some(o => o.value === curYear)){
       el.insertAdjacentHTML('afterbegin', `<option value="${curYear}">${curYear}</option>`);
     }
     el.value = curYear;
   });
+
+  // For teachers, force their assigned class
+  const teacherCls = (isTeacher() && SESSION?.assigned_class) ? SESSION.assigned_class : null;
+
   // Populate class filter
   const clsSel = document.getElementById('rep-class');
   if(clsSel){
-    const curCls = clsSel.value;
-    clsSel.innerHTML = '<option value="">All classes</option>';
-    const classes = [...new Set(CACHE.students.map(s=>s.cls))].sort();
-    classes.forEach(c => clsSel.innerHTML += `<option value="${c}">${c}</option>`);
-    if(curCls) clsSel.value = curCls;
+    if(teacherCls){
+      clsSel.innerHTML = `<option value="${teacherCls}">${teacherCls}</option>`;
+      clsSel.value = teacherCls;
+      clsSel.disabled = true;
+    } else {
+      const curCls = clsSel.value;
+      clsSel.innerHTML = '<option value="">All classes</option>';
+      const classes = [...new Set(CACHE.students.map(s=>s.cls))].sort();
+      classes.forEach(c => clsSel.innerHTML += `<option value="${c}">${c}</option>`);
+      if(curCls) clsSel.value = curCls;
+      clsSel.disabled = false;
+    }
   }
-  // Populate student dropdown
+
+  // Populate student dropdown — filtered to teacher's class
   const sel = document.getElementById('rep-student');
   if(!sel) return;
   const cur = sel.value;
-  const cls = clsSel?.value || '';
+  const cls = teacherCls || clsSel?.value || '';
   sel.innerHTML = '<option value="">-- Select student --</option>';
   const filtered = cls ? CACHE.students.filter(s=>s.cls===cls) : CACHE.students;
   [...filtered].sort((a,b)=>(a.lname+a.fname).localeCompare(b.lname+b.fname))
@@ -2153,6 +2199,19 @@ async function renderReportCard(){
   currentReportStudentId = sid;
   // Check if student has any scores for selected term/year
   const sc = getCachedScores(sid, term, year);
+
+  // Update year dropdown to highlight which years have data
+  const repYearEl2 = document.getElementById('rep-year');
+  if(repYearEl2 && sid){
+    const studentScores = CACHE.scores[sid] || {};
+    [...repYearEl2.options].forEach(opt => {
+      const hasData = Object.keys(studentScores).some(k =>
+        k.startsWith(term+'|') && k.endsWith('|'+opt.value) || k === term+'|'+opt.value
+      );
+      opt.text = opt.value + (hasData ? ' ✓' : '');
+    });
+  }
+
   if(!Object.keys(sc).length){
     area.innerHTML = `<div class="empty-state">
       <div class="empty-icon">📭</div>
