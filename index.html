@@ -2801,11 +2801,38 @@ function renderClassesPage(){
 //  EXCEL IMPORT ENGINE (SheetJS)
 // ══════════════════════════════════════════
 
-const SUBJ_MAP = {
-  'ENG':'English','MTC':'Mathematics','LIT':'Literacy',
-  'READ':'Reading','RE':'Religious Education',
-  'SCI':'Science','SST':'Social Studies'
+// Base abbreviation map (legacy Excel files with short headers)
+const SUBJ_MAP_BASE = {
+  'ENG':'English','ENGLISH':'English',
+  'MTC':'Mathematics','MATH':'Mathematics','MATHEMATICS':'Mathematics',
+  'LIT':'Literacy','LITERACY':'Literacy',
+  'LIT1A':'Literacy 1A','LITERACY 1A':'Literacy 1A',
+  'LIT1B':'Literacy 1B','LITERACY 1B':'Literacy 1B',
+  'READ':'Reading','READING':'Reading',
+  'RE':'Religious Education','RELIGIOUS EDUCATION':'Religious Education',
+  'SCI':'Science','SCIENCE':'Science',
+  'SST':'Social Studies','SOCIAL STUDIES':'Social Studies',
+  'NUMERACY':'Numeracy',
+  'WRITING':'Writing',
+  'SOCIAL DEVELOPMENT':'Social Development','SOC DEV':'Social Development',
+  'HEALTH HABITS':'Health Habits','HEALTH':'Health Habits',
+  'PROJECT WORK':'Project Work','PROJECT':'Project Work',
 };
+
+// Build a full subject map including all subjects from registered classes
+function getSubjMap(){
+  const map = {...SUBJ_MAP_BASE};
+  // Add every subject from every registered class (exact name, uppercase key)
+  (CACHE.classes || []).forEach(cls => {
+    (cls.subjects || []).forEach(sub => {
+      map[sub.trim().toUpperCase()] = sub.trim();
+    });
+  });
+  return map;
+}
+
+// Keep SUBJ_MAP as alias for compatibility
+const SUBJ_MAP = SUBJ_MAP_BASE;
 
 let impParsedClasses = [];  // [{cls, term, subjects, students:[{fname,lname,scores}]}]
 
@@ -2888,7 +2915,7 @@ function impProcessFile(file){
 
 function impParseSheet(rows){
   const classes = [];
-  let currentCls = null, subjectCols = [], students = [], paycodeCol = -1;
+  let currentCls = null, subjectCols = [], students = [];
 
   for(let i = 0; i < rows.length; i++){
     const row = rows[i];
@@ -2913,13 +2940,11 @@ function impParseSheet(rows){
     // ── Detect column header row: first cell is "NO" ──
     if(first === 'NO' || first === 'No' || first === 'NO.'){
       subjectCols = [];
-      paycodeCol = -1;
       for(let c = 0; c < row.length; c++){
         const v = row[c] !== null ? String(row[c]).trim().toUpperCase() : '';
-        if(v === 'PAYMENT CODE' || v === 'PAYCODE' || v === 'PAY CODE' || v === 'CODE'){
-          paycodeCol = c;
-        } else if(SUBJ_MAP[v]){
-          subjectCols.push({col: c, name: SUBJ_MAP[v]});
+        const subjMap = getSubjMap();
+        if(subjMap[v]){
+          subjectCols.push({col: c, name: subjMap[v]});
         }
       }
       continue;
@@ -2940,11 +2965,8 @@ function impParseSheet(rows){
           scores[name] = parseFloat(v);
         }
       });
-      const paycode = paycodeCol >= 0 && row[paycodeCol] !== null
-        ? String(row[paycodeCol]).trim()
-        : '';
       if(Object.keys(scores).length > 0){
-        students.push({fname: firstname, lname: surname, scores, paycode});
+        students.push({fname: firstname, lname: surname, scores});
       }
     }
   }
@@ -3068,10 +3090,10 @@ async function impConfirm(){
         if(!lookup[key]){
           toInsert.push({
             fname: fn, lname: ln, cls: cls.cls,
-            paycode: s.paycode || '', teacher: clsTeacher, year, notes: ''
+            paycode: '', teacher: clsTeacher, year, notes: ''
           });
         }
-        toScore.push({fname: fn, lname: ln, scores: s.scores, paycode: s.paycode || ''});
+        toScore.push({fname: fn, lname: ln, scores: s.scores});
       }
 
       // Bulk insert new students in batches of 50
@@ -3087,21 +3109,6 @@ async function impConfirm(){
             clsNew++;
             totalNew++;
           });
-        }
-      }
-
-      // Update paycode for existing students if import contains one
-      for(const s of toScore){
-        if(!s.paycode) continue;
-        const key = `${s.fname}|${s.lname}|${cls.cls}`;
-        const student = lookup[key];
-        if(!student || !student.id) continue;
-        // Only patch if paycode differs
-        if((student.paycode || '') !== s.paycode){
-          try {
-            await sbPatch('students', `id=eq.${student.id}`, {paycode: s.paycode});
-            student.paycode = s.paycode;  // update cache
-          } catch(e){ console.warn('paycode patch failed', e); }
         }
       }
 
@@ -3230,72 +3237,48 @@ function downloadTemplateCustom(){
   if(typeof XLSX === 'undefined'){
     showAlert('SheetJS not loaded — check internet connection.','danger'); return;
   }
-  const termVal  = document.getElementById('tmpl-term').value;
-  const year     = document.getElementById('tmpl-year').value || '2026';
-  const termLabel = TERM_LABELS[termVal];
-  const checked  = [...document.querySelectorAll('#tmpl-class-checkboxes input:checked')].map(i => i.value);
+  const termVal   = document.getElementById('tmpl-term').value;
+  const year      = document.getElementById('tmpl-year').value || '2026';
+  const termLabel = TERM_LABELS[termVal] || 'MID TERM ONE';
+  const checked   = [...document.querySelectorAll('#tmpl-class-checkboxes input:checked')].map(i => i.value);
 
   if(!checked.length){ showAlert('Select at least one class.','warning'); return; }
 
-  // Read the base template
-  const bytes = Uint8Array.from(atob(TEMPLATE_B64), c => c.charCodeAt(0));
-  const wb    = XLSX.read(bytes, {type:'array'});
+  const wb = XLSX.utils.book_new();
 
-  // Update title row (row 2, cell A2) on each selected class sheet
-  checked.forEach(cls => {
-    if(!wb.SheetNames.includes(cls)) return;
-    const ws   = wb.Sheets[cls];
-    const cell = ws['A2'];
-    if(cell) cell.v = `${cls} ${termLabel} ${year}`;
+  // Build one sheet per selected class from CACHE.classes
+  checked.forEach(clsName => {
+    const classDef = CACHE.classes.find(c => c.name === clsName) || {};
+    const subjects = classDef.subjects || getSubjectsForClass(clsName);
+
+    // Rows: title, blank, header, 40 student rows
+    const titleRow   = [`${clsName} ${termLabel} ${year}`];
+    const blankRow   = [];
+    const headerRow  = ['NO', 'SURNAME', 'FIRSTNAME', ...subjects];
+    const studentRows = Array.from({length: 40}, (_, i) => [i + 1, '', '', ...subjects.map(() => '')]);
+
+    const wsData = [titleRow, blankRow, headerRow, ...studentRows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Column widths
+    ws['!cols'] = [
+      {wch: 5},   // NO
+      {wch: 22},  // SURNAME
+      {wch: 22},  // FIRSTNAME
+      ...subjects.map(() => ({wch: 12}))
+    ];
+
+    // Merge title row across all columns
+    const totalCols = 3 + subjects.length;
+    ws['!merges'] = [{s:{r:0,c:0}, e:{r:0,c:totalCols-1}}];
+
+    XLSX.utils.book_append_sheet(wb, ws, clsName);
   });
 
-  // Inject PAYMENT CODE column into each selected sheet
-  checked.forEach(cls => {
-    if(!wb.SheetNames.includes(cls)) return;
-    const ws = wb.Sheets[cls];
-    // Find the header row (row with "NO" in column A) using sheet data
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
-    for(let r = range.s.r; r <= range.e.r; r++){
-      const cellAddr = XLSX.utils.encode_cell({r, c: 0});
-      const cell = ws[cellAddr];
-      if(cell && String(cell.v).trim().toUpperCase() === 'NO'){
-        // Insert PAYMENT CODE as the 4th column (index 3), shifting subjects right
-        // First shift all columns from index 3 onwards right by 1
-        for(let col = range.e.c; col >= 3; col--){
-          for(let row = r; row <= range.e.r; row++){
-            const from = XLSX.utils.encode_cell({r: row, c: col});
-            const to   = XLSX.utils.encode_cell({r: row, c: col + 1});
-            if(ws[from]){ ws[to] = ws[from]; delete ws[from]; }
-          }
-        }
-        // Write PAYMENT CODE header
-        ws[XLSX.utils.encode_cell({r, c: 3})] = {v: 'PAYMENT CODE', t: 's'};
-        // Write blank cells for all student rows
-        for(let row = r + 1; row <= range.e.r; row++){
-          const addr = XLSX.utils.encode_cell({r: row, c: 3});
-          if(!ws[addr]) ws[addr] = {v: '', t: 's'};
-        }
-        // Update sheet range
-        const newRange = {...range, e: {...range.e, c: range.e.c + 1}};
-        ws['!ref'] = XLSX.utils.encode_range(newRange);
-        break;
-      }
-    }
-  });
-
-  // Remove sheets not selected (keep INSTRUCTIONS always)
-  const sheetsToRemove = wb.SheetNames.filter(s => s !== 'INSTRUCTIONS' && !checked.includes(s));
-  sheetsToRemove.forEach(s => {
-    const idx = wb.SheetNames.indexOf(s);
-    wb.SheetNames.splice(idx, 1);
-    delete wb.Sheets[s];
-  });
-
-  // Download
   const filename = `MSES_${termLabel.replace(/\s+/g,'_')}_${year}_Template.xlsx`;
   XLSX.writeFile(wb, filename);
   closeModal('modal-template');
-  showAlert(`Template downloaded: ${filename}`);
+  showAlert(`Template downloaded: ${filename} (${checked.length} class${checked.length!==1?'es':''})`);
 }
 
 // ══════════════════════════════════════════
