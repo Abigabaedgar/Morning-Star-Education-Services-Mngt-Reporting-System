@@ -620,9 +620,11 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 
       <!-- ── REPORT CARDS ── -->
       <div id="page-reports" class="page">
-        <div class="card" style="margin-bottom:20px">
+
+        <!-- Single report card generator -->
+        <div class="card" style="margin-bottom:16px">
           <div class="card-header">
-            <div class="card-title">Generate Report Card</div>
+            <div class="card-title">Preview Single Report Card</div>
           </div>
           <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:14px">
             <div class="form-group">
@@ -653,14 +655,65 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             </div>
           </div>
           <div style="display:flex;gap:10px;margin-top:14px">
-            <button class="btn btn-primary" onclick="printCurrentReport()">🖨️ Print Report</button>
-            <button class="btn" onclick="generateAllReports()">📦 Generate All (Class)</button>
+            <button class="btn btn-primary" onclick="printCurrentReport()">🖨️ Print This Report</button>
           </div>
         </div>
+
+        <!-- Bulk print -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📦 Bulk Print — Whole Class</div>
+              <div class="card-sub">Select a class and term, tick the students you want, then print all at once</div>
+            </div>
+          </div>
+          <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
+            <div class="form-group">
+              <label>Class</label>
+              <select id="bulk-class" onchange="renderBulkStudentList()">
+                <option value="">-- Select class --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Term</label>
+              <select id="bulk-term">
+                <option value="midterm">Midterm</option>
+                <option value="bot">Beginning of Term</option>
+                <option value="end">End of Term</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Year</label>
+              <select id="bulk-year">
+                <option>2026</option><option>2025</option><option>2027</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="bulk-student-list" style="display:none;margin-bottom:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em" id="bulk-list-label">Students</div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-xs" onclick="bulkSelectAll(true)">Select All</button>
+                <button class="btn btn-xs" onclick="bulkSelectAll(false)">None</button>
+              </div>
+            </div>
+            <div id="bulk-checkboxes" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
+
+          <div id="bulk-actions" style="display:none;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-gold" onclick="printBulkReports()">🖨️ Print Selected Report Cards</button>
+            <span id="bulk-selected-count" style="font-size:12px;color:var(--text-muted);line-height:2.2"></span>
+          </div>
+          <div id="bulk-empty" style="font-size:13px;color:var(--text-muted);padding:10px 0;display:none">
+            Select a class above to see its students.
+          </div>
+        </div>
+
         <div id="report-card-area">
           <div class="empty-state">
             <div class="empty-icon">📄</div>
-            <div class="empty-text">Select a student to preview their report card</div>
+            <div class="empty-text">Select a student above to preview their report card</div>
             <div class="empty-sub">Fill in scores first under the Scores tab</div>
           </div>
         </div>
@@ -1807,9 +1860,129 @@ function processFile(file, target){
   // NOTE: Step 3 will add: const reader = new FileReader(); reader.onload = e => parseXLSX(e.target.result); reader.readAsArrayBuffer(file);
 }
 
-function confirmImport(){}
-function confirmImportPage(){}
-function generateAllReports(){ showAlert('Bulk generation coming in Step 3.','info'); }
+function generateAllReports(){ printBulkReports(); }
+
+// ── Bulk print ────────────────────────────────────────────────────────────────
+
+function renderBulkStudentList(){
+  const cls = document.getElementById('bulk-class').value;
+  const listWrap  = document.getElementById('bulk-student-list');
+  const actWrap   = document.getElementById('bulk-actions');
+  const emptyMsg  = document.getElementById('bulk-empty');
+  const boxes     = document.getElementById('bulk-checkboxes');
+  const label     = document.getElementById('bulk-list-label');
+
+  if(!cls){
+    listWrap.style.display = 'none';
+    actWrap.style.display  = 'none';
+    emptyMsg.style.display = 'block';
+    return;
+  }
+
+  const students = DB.students
+    .filter(s => s.cls === cls)
+    .sort((a,b) => a.lname.localeCompare(b.lname));
+
+  if(!students.length){
+    listWrap.style.display = 'none';
+    actWrap.style.display  = 'none';
+    emptyMsg.style.display = 'block';
+    emptyMsg.textContent   = `No students found in ${cls}.`;
+    return;
+  }
+
+  emptyMsg.style.display = 'none';
+  label.textContent = `${cls} — ${students.length} student${students.length!==1?'s':''}`;
+
+  boxes.innerHTML = students.map(s => `
+    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;
+      background:var(--gray-50);border:1px solid var(--border);border-radius:var(--radius);
+      padding:5px 11px;user-select:none">
+      <input type="checkbox" class="bulk-chk" value="${s.id}" checked
+        onchange="updateBulkCount()" style="cursor:pointer">
+      ${s.lname} ${s.fname}
+    </label>`).join('');
+
+  listWrap.style.display = 'block';
+  actWrap.style.display  = 'flex';
+  updateBulkCount();
+}
+
+function bulkSelectAll(checked){
+  document.querySelectorAll('.bulk-chk').forEach(c => c.checked = checked);
+  updateBulkCount();
+}
+
+function updateBulkCount(){
+  const total    = document.querySelectorAll('.bulk-chk').length;
+  const selected = document.querySelectorAll('.bulk-chk:checked').length;
+  document.getElementById('bulk-selected-count').textContent =
+    `${selected} of ${total} selected`;
+}
+
+function printBulkReports(){
+  const term = document.getElementById('bulk-term').value;
+  const year = document.getElementById('bulk-year').value || '2026';
+  const checked = [...document.querySelectorAll('.bulk-chk:checked')];
+
+  if(!checked.length){
+    showAlert('Select at least one student.', 'warning');
+    return;
+  }
+
+  // Temporarily override rep-year so buildReportHTML picks up bulk year
+  const repYearEl = document.getElementById('rep-year');
+  const prevYear  = repYearEl ? repYearEl.value : '2026';
+  if(repYearEl) repYearEl.value = year;
+
+  const cards = checked.map(c => buildReportHTML(parseInt(c.value), term)).join('');
+
+  if(repYearEl) repYearEl.value = prevYear;
+
+  const PRINT_STYLES = `
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1a202c;font-size:12px}
+    .report-paper{
+      max-width:680px;margin:0 auto;padding:24px;
+      page-break-after:always;
+    }
+    .report-paper:last-child{page-break-after:avoid}
+    .report-school-name{font-size:17px;font-weight:800;color:#0d3b6e;text-align:center}
+    .report-school-sub{font-size:12px;font-weight:600;color:#0d3b6e;text-align:center}
+    .report-addr{font-size:10px;color:#5a6473;text-align:center;line-height:1.7;margin-bottom:10px}
+    .report-divider{border:none;border-top:2px solid #0d3b6e;margin:10px 0}
+    .report-term-title{text-align:center;font-size:14px;font-weight:700;letter-spacing:.08em;margin:8px 0}
+    .report-meta-row{display:flex;gap:12px;background:#f8f9fa;border:1px solid #e4e8ed;
+      border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:12px;justify-content:space-between}
+    .report-meta-item strong{display:block;font-size:10px;text-transform:uppercase;
+      color:#5a6473;letter-spacing:.05em;margin-bottom:2px}
+    .report-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px}
+    .report-table th{background:#0d3b6e;color:#fff;padding:7px 10px;text-align:left}
+    .report-table td{padding:6px 10px;border-bottom:1px solid #e4e8ed}
+    .report-table tr:nth-child(even) td{background:#f8f9fa}
+    .report-table tfoot td{background:#f0f2f5;font-weight:700}
+    .report-footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:11px;margin-top:14px}
+    .sig-line{border-top:1px dashed #e4e8ed;margin-top:18px;padding-top:4px;color:#5a6473}
+    .report-promotion{font-size:13px;font-weight:700;color:#0d3b6e;text-align:center;
+      letter-spacing:.05em;margin:14px 0;padding:10px;border:2px dashed #c9a84c;border-radius:6px}
+    .gkey{display:inline-block;padding:2px 7px;border-radius:4px;background:#f0f2f5;
+      color:#5a6473;font-size:10px;margin:2px}
+    .grading-key-row{margin-bottom:14px}
+    @media print{
+      body{padding:0}
+      .report-paper{padding:10px;max-width:100%}
+    }
+  `;
+
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html>
+  <head><title>Bulk Report Cards — ${document.getElementById('bulk-class').value} ${term} ${year}</title>
+  <style>${PRINT_STYLES}</style></head>
+  <body>${cards}</body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 600);
+}
 
 // ══════════════════════════════════════════
 //  SETTINGS
@@ -2015,10 +2188,16 @@ function refreshClassDropdowns(){
   const names = getAllClassNames().sort();
   const optionsHtml = '<option value="">All classes</option>' +
     names.map(n=>`<option value="${n}">${n}</option>`).join('');
-  ['student-class-filter','scores-class-filter','class-filter-sel'].forEach(id => {
+  ['student-class-filter','scores-class-filter','class-filter-sel','bulk-class'].forEach(id => {
     const el = document.getElementById(id);
     if(el){ const cur=el.value; el.innerHTML=optionsHtml; el.value=cur; }
   });
+  // bulk-class needs its own prompt (not "All classes")
+  const bulkCls = document.getElementById('bulk-class');
+  if(bulkCls){
+    bulkCls.innerHTML = '<option value="">-- Select class --</option>' +
+      names.map(n=>`<option value="${n}">${n}</option>`).join('');
+  }
   // Add class select in student modal
   const sClass = document.getElementById('s-class');
   if(sClass){
