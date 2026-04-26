@@ -910,7 +910,14 @@ const CLASSES_CONFIG = {
   JY6:{label:'Junior Year 6',type:'junior',subjects:['English','Mathematics','Science','Social Studies']},
 }; // ← paste your anon key here
 
-const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storageKey: 'mses-auth-token',
+  }
+});
 
 // ── Auth helpers ──────────────────────────────────────────────────────────────
 async function doLogin(){
@@ -1199,7 +1206,10 @@ async function deleteStudent(id){
     renderStudentsTable();
     renderDashboard();
     showAlert('Student removed.','info');
-  } catch(e){ showAlert('Error: '+e.message,'danger'); }
+  } catch(e){
+    console.error('saveStudent error full:', JSON.stringify(e));
+    showAlert('Error saving: '+e.message,'danger');
+  }
 }
 
 function renderStudentsTable(){
