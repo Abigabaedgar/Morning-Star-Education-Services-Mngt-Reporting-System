@@ -1036,29 +1036,24 @@ function loadDB(){}
 async function loadAll(){
   try {
     const [
-      { data: students },
-      { data: classes  },
-      { data: settings },
-      { data: importLog},
+      students,
+      classes,
+      settings,
+      importLog,
     ] = await Promise.all([
-      _sb.from('students').select('*').order('lname'),
-      _sb.from('classes').select('*').order('name'),
-      _sb.from('settings').select('*'),
-      _sb.from('import_log').select('*').order('created_at', {ascending:false}).limit(100),
+      sbGet('students','order=lname'),
+      sbGet('classes','order=name'),
+      sbGet('settings',''),
+      sbGet('import_log','order=created_at.desc&limit=100'),
     ]);
-    CACHE.students  = students  || [];
-    console.log('Classes from Supabase:', classes);
-    CACHE.classes = (classes || []).map(c => {
-      // subjects may come back as a JSON string or already an array
+    CACHE.students = students || [];
+    CACHE.classes  = (classes || []).map(c => {
       let subs = c.subjects || [];
-      if(typeof subs === 'string'){
-        try { subs = JSON.parse(subs); } catch(e){ subs = []; }
-      }
+      if(typeof subs === 'string'){ try{ subs=JSON.parse(subs); }catch(e){ subs=[]; } }
       return {...c, subjects: subs};
     });
-    console.log('CACHE.classes after map:', CACHE.classes);
     CACHE.settings  = Object.fromEntries((settings||[]).map(r=>[r.key, r.value]));
-    CACHE.importLog = (importLog|| []).map(r => ({
+    CACHE.importLog = (importLog||[]).map(r=>({
       ...r,
       dateStr: new Date(r.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
       timeStr: new Date(r.created_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
