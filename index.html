@@ -318,7 +318,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
         <div class="form-group">
           <label>Year</label>
           <select id="sc-year">
-            <option>2026</option><option>2025</option><option>2027</option>
+            <option>2026</option><option>2025</option>
           </select>
         </div>
       </div>
@@ -648,7 +648,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <div class="form-group">
               <label>Year</label>
               <select id="rep-year" onchange="renderReportCard()">
-                <option>2026</option><option>2025</option>
+                <option>2026</option><option>2025</option><option>2027</option>
               </select>
             </div>
           </div>
@@ -1087,7 +1087,8 @@ async function loadAll(){
 
 // ── Score helpers ─────────────────────────────────────────────────────────────
 async function loadScoresForStudent(studentId){
-  if(CACHE.scores[studentId]) return;
+  // Already loaded in bulk during loadAll — only fetch if missing
+  if(CACHE.scores[studentId] && Object.keys(CACHE.scores[studentId]).length > 0) return;
   const data = await sbGet('scores', `student_id=eq.${studentId}&select=term,year,subject,score`);
   const byTerm = {};
   (data||[]).forEach(r => {
@@ -1099,8 +1100,13 @@ async function loadScoresForStudent(studentId){
 }
 
 function getCachedScores(studentId, term, year){
-  const k = term+'|'+(year||'2026');
-  return (CACHE.scores[studentId]||{})[k] || {};
+  const scores = CACHE.scores[studentId] || {};
+  // Try exact year first, then fall back to any year with data for that term
+  const exactKey = term+'|'+(year||'2026');
+  if(scores[exactKey]) return scores[exactKey];
+  // Find any key matching this term
+  const termKey = Object.keys(scores).find(k => k.startsWith(term+'|'));
+  return termKey ? scores[termKey] : {};
 }
 
 // ══════════════════════════════════════════
@@ -1341,16 +1347,19 @@ function populateScoreStudentDropdown(){
   if(cur) sel.value = cur;
 }
 
-function loadScoreFields(){
+async function loadScoreFields(){
   const sid = parseInt(document.getElementById('sc-student')?.value);
   const term = document.getElementById('sc-term')?.value;
+  const year = document.getElementById('sc-year')?.value || '2026';
   const area = document.getElementById('score-fields-area');
   if(!sid || !area){ if(area) area.innerHTML = '<div class="empty-state" style="padding:30px"><div class="empty-icon">📝</div><div class="empty-text">Select a student to enter scores</div></div>'; return; }
 
   const student = DB.students.find(s => s.id === sid);
   if(!student){ return; }
   const subs = getSubjectsForClass(student.cls);
-  const existing = DB.scores[sid]?.[term] || {};
+  // Load scores from Supabase
+  await loadScoresForStudent(sid);
+  const existing = getCachedScores(sid, term, year);
 
   area.innerHTML = `<div class="score-entry-grid">${subs.map(sub => {
     const val = existing[sub] !== undefined ? existing[sub] : '';
@@ -1418,7 +1427,8 @@ async function openScoresFor(sid){
   const subs = getSubjectsForClass(student?.cls);
   await loadScoresForStudent(sid);
   const term2 = document.getElementById('sc-term').value || 'midterm';
-  const existing = getCachedScores(sid, term2, '2026');
+  const year2 = document.getElementById('sc-year')?.value || '2026';
+  const existing = getCachedScores(sid, term2, year2);
   setTimeout(() => {
     subs.forEach(sub => {
       const inp = document.getElementById('score-'+sub.replace(/\s+/g,'_'));
@@ -1461,7 +1471,8 @@ function renderScoresPage(){
         </tr></thead>
         <tbody>
           ${studs.map(s => {
-            const sc = getCachedScores(s.id, term, '2026');
+            const year = document.getElementById('scores-term-filter')?.dataset?.year || '2026';
+            const sc = getCachedScores(s.id, term, year);
             const summary = calcStudentSummary(s.id, term);
             return `<tr>
               <td class="td-name">${s.fname} ${s.lname}</td>
@@ -1596,7 +1607,7 @@ function buildReportHTML(studentId, term){
       </tfoot>
     </table>
 
-    ${div ? `<div class="report-promotion">PROMOTED TO ${student.cls.replace('JY','JUNIOR YEAR ')}</div>` : ''}
+    ${(div && term === 'end') ? `<div class="report-promotion">PROMOTED TO ${student.cls.replace('JY','JUNIOR YEAR ').replace('KY','KINDERGARTEN YEAR ')}</div>` : ''}
 
     <div style="font-size:11px;margin-bottom:10px">
       <strong>Note:</strong> Midterm and End of term exams have been assessed out of 30% and 70% respectively to inform the 100%.
