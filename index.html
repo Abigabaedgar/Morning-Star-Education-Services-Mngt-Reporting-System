@@ -292,67 +292,11 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 
 <!-- ── Modals ── -->
 
-<!-- Add / Edit Student Modal -->
-<div class="modal-overlay" id="modal-student">
-  <div class="modal-box">
-    <div class="modal-head">
-      <span class="modal-title" id="modal-student-title">Add New Student</span>
-      <button class="modal-close" onclick="closeModal('modal-student')">×</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="edit-student-id">
-      <div class="form-grid form-grid-2" style="gap:14px">
-        <div class="form-group">
-          <label>First Name *</label>
-          <input type="text" id="s-firstname" placeholder="e.g. BOGERE" style="text-transform:uppercase">
-        </div>
-        <div class="form-group">
-          <label>Last Name *</label>
-          <input type="text" id="s-lastname" placeholder="e.g. MONICA" style="text-transform:uppercase">
-        </div>
-        <div class="form-group">
-          <label>Class *</label>
-          <select id="s-class" onchange="onClassChange()">
-            <option value="">-- Select class --</option>
-            <optgroup label="Kindergarten">
-              <option>KY1</option><option>KY2</option><option>KY3</option>
-            </optgroup>
-            <optgroup label="Junior">
-              <option>JY1</option><option>JY2</option><option>JY3</option>
-              <option>JY4</option><option>JY5</option><option>JY6</option>
-            </optgroup>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Payment Code</label>
-          <input type="text" id="s-paycode" placeholder="e.g. 1009488454">
-        </div>
-        <div class="form-group">
-          <label>Class Teacher</label>
-          <input type="text" id="s-teacher" placeholder="e.g. Atuhwere Patrick">
-        </div>
-        <div class="form-group">
-          <label>Year</label>
-          <input type="text" id="s-year" value="2026">
-        </div>
-      </div>
-      <div class="form-group mt-16">
-        <label>Notes / Special needs</label>
-        <textarea id="s-notes" placeholder="Optional notes about this student..."></textarea>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn" onclick="closeModal('modal-student')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveStudent()">Save Student</button>
-    </div>
-  </div>
-</div>
-
 <!-- Score Entry Modal -->
 <div class="modal-overlay" id="modal-scores">
   <div class="modal-box wide">
     <div class="modal-head">
-      <span class="modal-title" id="modal-scores-title">Enter Scores</span>
+      <span class="modal-title" id="modal-scores-title">View / Edit Scores</span>
       <button class="modal-close" onclick="closeModal('modal-scores')">×</button>
     </div>
     <div class="modal-body">
@@ -509,7 +453,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
       <a class="nav-item" onclick="showPage('scores',this)">
         <span class="nav-icon">📋</span>
         <span>Scores</span>
-        <span class="term-badge">T1</span>
+        
       </a>
       <a class="nav-item" onclick="showPage('reports',this)">
         <span class="nav-icon">📄</span>
@@ -554,8 +498,8 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
       </div>
       <div class="topbar-actions">
         <button class="btn btn-sm" onclick="openModal('modal-import')">📥 Import Excel</button>
-        <button class="btn btn-sm" onclick="openModal('modal-student')">+ Add Student</button>
-        <button class="btn btn-sm btn-gold" onclick="openModal('modal-scores')">✏️ Enter Scores</button>
+        
+        
       </div>
     </div>
 
@@ -626,7 +570,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <option>JY1</option><option>JY2</option><option>JY3</option>
             <option>JY4</option><option>JY5</option><option>JY6</option>
           </select>
-          <button class="btn btn-primary" onclick="prepStudentModal(); openModal('modal-student')">+ Add Student</button>
+
         </div>
         <div class="card" style="padding:0">
           <div class="table-wrap">
@@ -644,7 +588,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
                 </tr>
               </thead>
               <tbody id="students-tbody">
-                <tr><td colspan="8" class="text-center" style="padding:40px;color:var(--text-muted)">No students yet. Click "+ Add Student" to begin.</td></tr>
+                <tr><td colspan="8" class="text-center" style="padding:40px;color:var(--text-muted)">No students yet. Upload an assessment Excel file under Import Scores to get started.</td></tr>
               </tbody>
             </table>
           </div>
@@ -669,7 +613,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <option value="bot">Beginning of Term</option>
             <option value="end">End of Term (70%)</option>
           </select>
-          <button class="btn btn-gold" onclick="openModal('modal-scores')">✏️ Enter Scores</button>
+  
         </div>
         <div id="scores-content"></div>
       </div>
@@ -1143,8 +1087,8 @@ let currentReportStudentId = null;
 const PAGE_META = {
   dashboard:{title:'Dashboard',sub:'Overview · Morning Star Education Services'},
   classes:{title:'Classes',sub:'Class registry — teachers, subjects and configuration'},
-  students:{title:'Students',sub:'Registry of all enrolled students'},
-  scores:{title:'Scores',sub:'Enter and view student assessment scores'},
+  students:{title:'Students',sub:'All students imported from assessment files'},
+  scores:{title:'Scores',sub:'View student assessment scores by class and term'},
   reports:{title:'Report Cards',sub:'Generate and print student report cards'},
   import:{title:'Import Scores',sub:'Upload Excel files to bulk-import scores'},
   settings:{title:'Settings',sub:'School configuration and data management'}
@@ -1296,7 +1240,7 @@ function renderStudentsTable(){
         <div class="flex gap-10 items-center">
           <button class="btn btn-xs" onclick="openScoresFor(${s.id})">Scores</button>
           <button class="btn btn-xs btn-primary" onclick="openReportFor(${s.id})">Report</button>
-          <button class="btn btn-xs" onclick="prepStudentModal(DB.students.find(x=>x.id==${s.id})); openModal('modal-student')">Edit</button>
+          
           <button class="btn btn-xs btn-danger" onclick="deleteStudent(${s.id})">Del</button>
         </div>
       </td>
@@ -1665,7 +1609,7 @@ function renderDashboard(){
         ${studs.length===0?'<span style="font-size:11px;color:var(--text-light)">No students yet</span>':''}
       </div>
     </div>`;
-  }).join('') || '<div style="grid-column:1/-1;color:var(--text-muted);padding:20px">No students registered yet.</div>';
+  }).join('') || '<div style="grid-column:1/-1;color:var(--text-muted);padding:20px">No students yet — upload an assessment file under Import Scores.</div>';
 
   // Top performers
   const tops = DB.students.map(s => {
