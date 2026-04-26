@@ -399,27 +399,60 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
   position:fixed;inset:0;background:var(--gray-100);
   display:flex;align-items:center;justify-content:center;z-index:1000">
   <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
-    padding:40px;width:380px;box-shadow:0 8px 32px rgba(0,0,0,.12)">
-    <div style="text-align:center;margin-bottom:28px">
+    padding:40px;width:400px;box-shadow:0 8px 32px rgba(0,0,0,.12)">
+    <div style="text-align:center;margin-bottom:24px">
       <div style="width:52px;height:52px;border-radius:50%;background:#0d3b6e;
         display:flex;align-items:center;justify-content:center;font-size:20px;
         color:#c9a84c;font-weight:700;margin:0 auto 14px">★</div>
       <div style="font-size:17px;font-weight:700;color:var(--text)">Morning Star Education Services</div>
       <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Staff portal — sign in to continue</div>
     </div>
+
+    <!-- Tab switcher -->
+    <div style="display:flex;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;overflow:hidden">
+      <button id="tab-staff" onclick="switchLoginTab('staff')"
+        style="flex:1;padding:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;
+               background:var(--navy);color:var(--white)">Staff Login</button>
+      <button id="tab-admin" onclick="switchLoginTab('admin')"
+        style="flex:1;padding:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;
+               background:var(--white);color:var(--text-muted)">Admin Login</button>
+    </div>
+
     <div id="login-error" style="display:none;margin-bottom:14px" class="alert alert-danger"></div>
-    <div class="form-group" style="margin-bottom:14px">
-      <label>Email</label>
-      <input type="email" id="login-email" placeholder="your@email.com"
-        onkeydown="if(event.key==='Enter') doLogin()">
+
+    <!-- Staff (username + PIN) -->
+    <div id="login-staff-form">
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Username</label>
+        <input type="text" id="login-username" placeholder="e.g. snakato"
+          onkeydown="if(event.key==='Enter') document.getElementById('login-pin').focus()"
+          autocomplete="username">
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label>PIN</label>
+        <input type="password" id="login-pin" placeholder="••••••" maxlength="6"
+          onkeydown="if(event.key==='Enter') doStaffLogin()" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px"
+        onclick="doStaffLogin()" id="login-btn-staff">Sign in</button>
     </div>
-    <div class="form-group" style="margin-bottom:20px">
-      <label>Password</label>
-      <input type="password" id="login-password" placeholder="••••••••"
-        onkeydown="if(event.key==='Enter') doLogin()">
+
+    <!-- Admin (email + password) -->
+    <div id="login-admin-form" style="display:none">
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="your@email.com"
+          onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px"
+        onclick="doLogin()" id="login-btn">Sign in</button>
     </div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px"
-      onclick="doLogin()" id="login-btn">Sign in</button>
+
     <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--text-muted)">
       Contact your administrator to get access
     </div>
@@ -470,6 +503,14 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
       <a class="nav-item" onclick="showPage('import',this)">
         <span class="nav-icon">📥</span>
         <span>Import Scores</span>
+      </a>
+      <a class="nav-item" onclick="showPage('promotions',this)">
+        <span class="nav-icon">🎓</span>
+        <span>Promotions</span>
+      </a>
+      <a class="nav-item" onclick="showPage('users',this)" id="nav-users">
+        <span class="nav-icon">👥</span>
+        <span>Users</span>
       </a>
       <a class="nav-item" onclick="showPage('settings',this)">
         <span class="nav-icon">⚙</span>
@@ -924,9 +965,197 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
         </div>
       </div>
 
+      <!-- ── PROMOTIONS ── -->
+      <div id="page-promotions" class="page">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🎓 End-of-Year Promotions</div>
+              <div class="card-sub">Promote students to the next class. Score history is preserved.</div>
+            </div>
+          </div>
+          <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr auto;gap:14px;align-items:end">
+            <div class="form-group">
+              <label>From Class</label>
+              <select id="promo-from" onchange="renderPromotionList()">
+                <option value="">-- Select class --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>To Class (default)</label>
+              <select id="promo-to">
+                <option value="">-- Select destination --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Academic Year</label>
+              <select id="promo-year">
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+                <option value="2025">2025</option>
+              </select>
+            </div>
+            <div>
+              <button class="btn btn-gold" onclick="runPromotion()" id="btn-promote" disabled>
+                🎓 Promote Selected
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="promo-list-wrap" style="display:none">
+          <div class="card" style="padding:0">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <span class="section-title-text" id="promo-list-title">Students</span>
+                <span style="font-size:12px;color:var(--text-muted);margin-left:10px" id="promo-selected-count"></span>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-xs" onclick="promoSelectAll(true)">Select All</button>
+                <button class="btn btn-xs" onclick="promoSelectAll(false)">None</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:40px"><input type="checkbox" id="promo-chk-all" onchange="promoSelectAll(this.checked)" checked></th>
+                    <th>#</th>
+                    <th>Student</th>
+                    <th>Current Class</th>
+                    <th>Promote to</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="promo-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="promo-empty" style="display:none">
+          <div class="empty-state">
+            <div class="empty-icon">🎓</div>
+            <div class="empty-text">Select a source class above</div>
+            <div class="empty-sub">All students will load here for you to review before promoting</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── USERS ── -->
+      <div id="page-users" class="page">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div>
+            <div style="font-size:15px;font-weight:700">Staff Accounts</div>
+            <div style="font-size:12px;color:var(--text-muted)">Manage login access for teachers and head teacher</div>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-add-user')">+ Add User</button>
+        </div>
+        <div class="card" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>Class</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody">
+                <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app-shell -->
+
+<!-- Add User Modal -->
+<div class="modal-overlay" id="modal-add-user">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-head">
+      <span class="modal-title" id="add-user-modal-title">Add Staff Account</span>
+      <button class="modal-close" onclick="closeModal('modal-add-user')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-user-id" value="">
+      <div class="form-grid form-grid-2" style="gap:14px">
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Full Name</label>
+          <input type="text" id="u-name" placeholder="e.g. Sarah Nakato">
+        </div>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="u-username" placeholder="e.g. snakato" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="u-role" onchange="toggleClassField()">
+            <option value="teacher">Teacher</option>
+            <option value="headteacher">Head Teacher</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="form-group" id="u-class-wrap">
+          <label>Assigned Class</label>
+          <select id="u-class">
+            <option value="">-- Select class --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label id="u-pin-label">PIN (4–6 digits)</label>
+          <input type="password" id="u-pin" placeholder="••••••" maxlength="6" autocomplete="new-password">
+        </div>
+        <div class="form-group" id="u-pin-confirm-wrap">
+          <label>Confirm PIN</label>
+          <input type="password" id="u-pin-confirm" placeholder="••••••" maxlength="6">
+        </div>
+      </div>
+      <div id="user-form-error" class="alert alert-danger" style="display:none;margin-top:12px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('modal-add-user')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()" id="btn-save-user">Save Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset PIN Modal -->
+<div class="modal-overlay" id="modal-reset-pin">
+  <div class="modal-box" style="max-width:380px">
+    <div class="modal-head">
+      <span class="modal-title">Reset PIN</span>
+      <button class="modal-close" onclick="closeModal('modal-reset-pin')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;margin-bottom:14px">
+        Setting a new PIN for: <strong id="reset-pin-name"></strong>
+      </div>
+      <div class="form-grid form-grid-2" style="gap:12px">
+        <div class="form-group">
+          <label>New PIN</label>
+          <input type="password" id="reset-pin-new" placeholder="••••••" maxlength="6">
+        </div>
+        <div class="form-group">
+          <label>Confirm PIN</label>
+          <input type="password" id="reset-pin-confirm" placeholder="••••••" maxlength="6">
+        </div>
+      </div>
+      <div id="reset-pin-error" class="alert alert-danger" style="display:none;margin-top:12px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('modal-reset-pin')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmResetPin()">Reset PIN</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ══════════════════════════════════════════
@@ -963,7 +1192,44 @@ const CLASSES_CONFIG = {
 }; // ← paste your anon key here
 
 // ── Direct Supabase REST API (no SDK — avoids Promise hang issues) ────────────
+
 let SB_TOKEN = localStorage.getItem('mses_sb_token') || null;
+
+// ── Session (role-aware) ──────────────────────────────────────────────────────
+let SESSION = JSON.parse(localStorage.getItem('mses_session') || 'null');
+// SESSION = { id, name, username, role:'admin'|'headteacher'|'teacher', assigned_class }
+
+function getRole(){ return SESSION ? SESSION.role : (SB_TOKEN ? 'admin' : null); }
+function isAdmin(){ return getRole() === 'admin'; }
+function isHeadTeacher(){ return getRole() === 'headteacher'; }
+function isTeacher(){ return getRole() === 'teacher'; }
+function canEdit(){ return isAdmin(); }   // only admin edits scores/imports/etc.
+
+// ── Apply role-based UI restrictions ─────────────────────────────────────────
+function applyRoleUI(){
+  const role = getRole();
+  const adminOnly   = document.querySelectorAll('[data-role="admin"]');
+  const nonTeacher  = document.querySelectorAll('[data-role="non-teacher"]');
+  adminOnly.forEach(el => el.style.display = role==='admin' ? '' : 'none');
+  nonTeacher.forEach(el => el.style.display = role==='teacher' ? 'none' : '');
+
+  // Hide nav items based on role
+  const navItems = {
+    'nav-users': ['admin'],
+  };
+  Object.entries(navItems).forEach(([id, roles]) => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = roles.includes(role) ? '' : 'none';
+  });
+
+  // Show/hide topbar import button
+  const importBtn = document.querySelector('.topbar-actions .btn-sm');
+  if(importBtn) importBtn.style.display = isAdmin() ? '' : 'none';
+
+  // Sidebar user label
+  const lbl = document.getElementById('sidebar-user-email');
+  if(lbl && SESSION) lbl.textContent = SESSION.name + ' · ' + SESSION.role;
+}
 
 // ── Chunk array into batches ─────────────────────────────────────────────────
 function chunkArray(arr, size){
@@ -1083,7 +1349,17 @@ async function doLogin(){
     localStorage.setItem('mses_sb_token', SB_TOKEN);
     localStorage.setItem('mses_sb_email', email);
     if(data.refresh_token) localStorage.setItem('mses_sb_refresh', data.refresh_token);
+    SESSION = null; // admin uses SB_TOKEN not SESSION
+    localStorage.removeItem('mses_session');
     showApp(email);
+    await loadAll();
+    populateScoreStudentDropdown();
+    refreshClassDropdowns();
+    renderDashboard();
+    renderStudentsTable();
+    renderImportLog();
+    renderClassesPage();
+    applyRoleUI();
   } catch(e){
     err.textContent = e.message; err.style.display = 'block';
   }
@@ -1092,9 +1368,11 @@ async function doLogin(){
 
 function doLogout(){
   SB_TOKEN = null;
+  SESSION  = null;
   localStorage.removeItem('mses_sb_token');
   localStorage.removeItem('mses_sb_email');
   localStorage.removeItem('mses_sb_refresh');
+  localStorage.removeItem('mses_session');
   document.getElementById('app-shell').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-email').value = '';
@@ -1289,6 +1567,8 @@ const PAGE_META = {
   students:{title:'Students',sub:'All students imported from assessment files'},
   scores:{title:'Scores',sub:'View student assessment scores by class and term'},
   reports:{title:'Report Cards',sub:'Generate and print student report cards'},
+  promotions:{title:'Promotions',sub:'Promote students to the next class at end of year'},
+  users:{title:'Staff Accounts',sub:'Manage teacher and head teacher login access'},
   import:{title:'Import Scores',sub:'Upload Excel files to bulk-import scores'},
   settings:{title:'Settings',sub:'School configuration and data management'}
 };
@@ -1315,6 +1595,8 @@ function showPage(name, navEl){
   if(name==='import') renderImportLog();
   if(name==='reports') populateReportDropdown();
   if(name==='settings') populateSettingsForm();
+  if(name==='promotions') { renderPromotionDropdowns(); renderPromotionList(); }
+  if(name==='users') { if(isAdmin()) renderUsersPage(); else showAlert('Access denied.','danger'); }
 }
 
 // ══════════════════════════════════════════
@@ -2276,7 +2558,7 @@ function refreshClassDropdowns(){
   const names = getAllClassNames().sort();
   const optionsHtml = '<option value="">All classes</option>' +
     names.map(n=>`<option value="${n}">${n}</option>`).join('');
-  ['student-class-filter','scores-class-filter','class-filter-sel','bulk-class'].forEach(id => {
+  ['student-class-filter','scores-class-filter','class-filter-sel','bulk-class','promo-from','promo-to','u-class'].forEach(id => {
     const el = document.getElementById(id);
     if(el){ const cur=el.value; el.innerHTML=optionsHtml; el.value=cur; }
   });
@@ -2466,12 +2748,15 @@ function impParseSheet(rows){
 
     const first = row[0] !== null ? String(row[0]).trim() : '';
 
-    // ── Detect class header: "JY1 MID TERM ONE 2026" ──
-    const clsMatch = first.match(/^(JY[1-6]|KY[1-3])\b/i);
-    if(clsMatch){
+    // ── Detect class header — matches any registered class name dynamically ──
+    const registeredNames = (CACHE.classes || []).map(c => c.name);
+    const matchedCls = registeredNames.find(n =>
+      first.toUpperCase().startsWith(n.toUpperCase())
+    );
+    if(matchedCls){
       if(currentCls && students.length > 0)
         classes.push({cls: currentCls, subjects: subjectCols.map(s=>s.name), students});
-      currentCls = clsMatch[1].toUpperCase();
+      currentCls = matchedCls.toUpperCase();
       subjectCols = [];
       students = [];
       continue;
@@ -2913,6 +3198,366 @@ function renderImportLog(){
   area.innerHTML = summaryHtml + tableHtml;
 }
 
+
+
+// ══════════════════════════════════════════
+//  LOGIN — TAB SWITCHER
+// ══════════════════════════════════════════
+function switchLoginTab(tab){
+  const isStaff = tab === 'staff';
+  document.getElementById('login-staff-form').style.display = isStaff ? '' : 'none';
+  document.getElementById('login-admin-form').style.display = isStaff ? 'none' : '';
+  document.getElementById('tab-staff').style.background = isStaff ? 'var(--navy)' : 'var(--white)';
+  document.getElementById('tab-staff').style.color = isStaff ? 'var(--white)' : 'var(--text-muted)';
+  document.getElementById('tab-admin').style.background = isStaff ? 'var(--white)' : 'var(--navy)';
+  document.getElementById('tab-admin').style.color = isStaff ? 'var(--text-muted)' : 'var(--white)';
+}
+
+// ── PIN hashing (SHA-256 via Web Crypto) ──────────────────────────────────────
+async function hashPin(pin){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Staff login (username + PIN) ──────────────────────────────────────────────
+async function doStaffLogin(){
+  const username = document.getElementById('login-username').value.trim().toLowerCase();
+  const pin      = document.getElementById('login-pin').value.trim();
+  const err      = document.getElementById('login-error');
+  const btn      = document.getElementById('login-btn-staff');
+  err.style.display = 'none';
+  if(!username || !pin){ err.textContent='Enter your username and PIN.'; err.style.display='block'; return; }
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  try {
+    const pinHash = await hashPin(pin);
+    // Fetch user by username — use anon key only (no auth token for staff login)
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/app_users?username=eq.${encodeURIComponent(username)}&active=eq.true&select=id,name,username,role,assigned_class,pin_hash`, {
+      headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON }
+    });
+    const rows = await r.json();
+    if(!rows.length || rows[0].pin_hash !== pinHash){
+      throw new Error('Invalid username or PIN.');
+    }
+    const user = rows[0];
+    SESSION = { id: user.id, name: user.name, username: user.username, role: user.role, assigned_class: user.assigned_class };
+    localStorage.setItem('mses_session', JSON.stringify(SESSION));
+    showApp(user.name);
+    await loadAll();
+    populateScoreStudentDropdown();
+    refreshClassDropdowns();
+    renderDashboard();
+    renderStudentsTable();
+    renderImportLog();
+    renderClassesPage();
+    applyRoleUI();
+  } catch(e){
+    err.textContent = e.message; err.style.display = 'block';
+  }
+  btn.textContent = 'Sign in'; btn.disabled = false;
+}
+
+// ══════════════════════════════════════════
+//  USERS PAGE
+// ══════════════════════════════════════════
+async function renderUsersPage(){
+  const tbody = document.getElementById('users-tbody');
+  if(!tbody) return;
+  try {
+    const rows = await sbGet('app_users', 'order=name&select=id,name,username,role,assigned_class,active,created_at');
+    if(!rows || !rows.length){
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">No users yet. Add the first one above.</td></tr>';
+      return;
+    }
+    const roleBadge = r => r==='admin' ? 'badge-navy' : r==='headteacher' ? 'badge-gold' : 'badge-d2';
+    const roleLabel = r => r==='admin' ? 'Admin' : r==='headteacher' ? 'Head Teacher' : 'Teacher';
+    tbody.innerHTML = rows.map((u,i) => `<tr>
+      <td class="td-muted">${i+1}</td>
+      <td class="td-name">${u.name}</td>
+      <td class="td-muted" style="font-family:monospace">${u.username}</td>
+      <td><span class="badge ${roleBadge(u.role)}">${roleLabel(u.role)}</span></td>
+      <td class="td-muted">${u.assigned_class || '—'}</td>
+      <td><span class="badge" style="background:${u.active?'#c8f7dc':'#fee2e2'};color:${u.active?'#145c30':'#991b1b'}">${u.active?'Active':'Inactive'}</span></td>
+      <td>
+        <div class="flex gap-10">
+          <button class="btn btn-xs" onclick="openEditUser(${JSON.stringify(u).replace(/"/g,'&quot;')})">Edit</button>
+          <button class="btn btn-xs" onclick="openResetPin(${u.id},'${u.name.replace(/'/g,"\\'")}')">Reset PIN</button>
+          <button class="btn btn-xs btn-danger" onclick="toggleUserActive(${u.id},${u.active})">${u.active?'Disable':'Enable'}</button>
+        </div>
+      </td>
+    </tr>`).join('');
+  } catch(e){
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red);padding:20px">${e.message}</td></tr>`;
+  }
+}
+
+function toggleClassField(){
+  const role = document.getElementById('u-role').value;
+  const wrap = document.getElementById('u-class-wrap');
+  wrap.style.display = role === 'teacher' ? '' : 'none';
+}
+
+function openEditUser(u){
+  document.getElementById('add-user-modal-title').textContent = 'Edit Staff Account';
+  document.getElementById('edit-user-id').value = u.id;
+  document.getElementById('u-name').value = u.name;
+  document.getElementById('u-username').value = u.username;
+  document.getElementById('u-role').value = u.role;
+  document.getElementById('u-class').value = u.assigned_class || '';
+  document.getElementById('u-pin').value = '';
+  document.getElementById('u-pin-confirm').value = '';
+  document.getElementById('u-pin-label').textContent = 'New PIN (leave blank to keep current)';
+  document.getElementById('u-pin-confirm-wrap').style.display = '';
+  toggleClassField();
+  document.getElementById('user-form-error').style.display = 'none';
+  openModal('modal-add-user');
+}
+
+async function saveUser(){
+  const errEl  = document.getElementById('user-form-error');
+  errEl.style.display = 'none';
+  const editId = document.getElementById('edit-user-id').value;
+  const name     = document.getElementById('u-name').value.trim();
+  const username = document.getElementById('u-username').value.trim().toLowerCase();
+  const role     = document.getElementById('u-role').value;
+  const cls      = document.getElementById('u-class').value || null;
+  const pin      = document.getElementById('u-pin').value.trim();
+  const pinConf  = document.getElementById('u-pin-confirm').value.trim();
+
+  if(!name || !username){ errEl.textContent='Name and username are required.'; errEl.style.display='block'; return; }
+  if(!editId && !pin){ errEl.textContent='PIN is required for new accounts.'; errEl.style.display='block'; return; }
+  if(pin && (pin.length < 4 || !/^\d+$/.test(pin))){ errEl.textContent='PIN must be 4–6 digits.'; errEl.style.display='block'; return; }
+  if(pin && pin !== pinConf){ errEl.textContent='PINs do not match.'; errEl.style.display='block'; return; }
+
+  const btn = document.getElementById('btn-save-user');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    const record = { name, username, role, assigned_class: cls, active: true };
+    if(pin) record.pin_hash = await hashPin(pin);
+    if(editId){
+      await sbPatch('app_users', `id=eq.${editId}`, record);
+    } else {
+      await sbPost('app_users', record);
+    }
+    closeModal('modal-add-user');
+    showAlert(`Account ${editId ? 'updated' : 'created'} successfully.`);
+    renderUsersPage();
+    // Reset form
+    document.getElementById('edit-user-id').value = '';
+    document.getElementById('add-user-modal-title').textContent = 'Add Staff Account';
+    document.getElementById('u-pin-label').textContent = 'PIN (4–6 digits)';
+    ['u-name','u-username','u-pin','u-pin-confirm'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('u-role').value = 'teacher';
+    toggleClassField();
+  } catch(e){
+    errEl.textContent = e.message; errEl.style.display = 'block';
+  }
+  btn.textContent = 'Save Account'; btn.disabled = false;
+}
+
+let resetPinUserId = null;
+function openResetPin(id, name){
+  resetPinUserId = id;
+  document.getElementById('reset-pin-name').textContent = name;
+  document.getElementById('reset-pin-new').value = '';
+  document.getElementById('reset-pin-confirm').value = '';
+  document.getElementById('reset-pin-error').style.display = 'none';
+  openModal('modal-reset-pin');
+}
+async function confirmResetPin(){
+  const errEl = document.getElementById('reset-pin-error');
+  errEl.style.display = 'none';
+  const pin  = document.getElementById('reset-pin-new').value.trim();
+  const conf = document.getElementById('reset-pin-confirm').value.trim();
+  if(!pin || pin.length < 4 || !/^\d+$/.test(pin)){ errEl.textContent='PIN must be 4–6 digits.'; errEl.style.display='block'; return; }
+  if(pin !== conf){ errEl.textContent='PINs do not match.'; errEl.style.display='block'; return; }
+  try {
+    const pin_hash = await hashPin(pin);
+    await sbPatch('app_users', `id=eq.${resetPinUserId}`, {pin_hash});
+    closeModal('modal-reset-pin');
+    showAlert('PIN reset successfully.');
+  } catch(e){ errEl.textContent=e.message; errEl.style.display='block'; }
+}
+
+async function toggleUserActive(id, currentlyActive){
+  if(!confirm(`${currentlyActive?'Disable':'Enable'} this account?`)) return;
+  await sbPatch('app_users', `id=eq.${id}`, {active: !currentlyActive});
+  renderUsersPage();
+  showAlert('Account updated.');
+}
+
+// sbPatch and sbPost helpers if not already present
+async function sbPatch(table, query, data){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+    method:'PATCH',
+    headers: sbHeaders({'Prefer':'return=minimal'}),
+    body: JSON.stringify(data)
+  });
+  if(!r.ok){ const e=await r.json(); throw new Error(e.message||'Update failed'); }
+}
+async function sbPost(table, data){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method:'POST',
+    headers: sbHeaders(),
+    body: JSON.stringify(data)
+  });
+  if(!r.ok){ const e=await r.json(); throw new Error(e.message||'Insert failed'); }
+  return r.json();
+}
+
+// ══════════════════════════════════════════
+//  PROMOTIONS
+// ══════════════════════════════════════════
+
+function renderPromotionDropdowns(){
+  // Dropdowns already populated by refreshClassDropdowns()
+  // Just ensure promo-from shows placeholder
+  const pf = document.getElementById('promo-from');
+  if(pf && pf.options[0] && pf.options[0].value !== '') {
+    pf.insertAdjacentHTML('afterbegin', '<option value="">-- Select class --</option>');
+    pf.value = '';
+  }
+}
+function renderPromotionList(){
+  const fromCls  = document.getElementById('promo-from').value;
+  const listWrap = document.getElementById('promo-list-wrap');
+  const emptyMsg = document.getElementById('promo-empty');
+  const btn      = document.getElementById('btn-promote');
+
+  if(!fromCls){
+    listWrap.style.display = 'none';
+    emptyMsg.style.display = 'block';
+    btn.disabled = true;
+    return;
+  }
+
+  // Suggest next class in the to-dropdown
+  const allNames  = CACHE.classes.map(c=>c.name).sort();
+  const fromIdx   = allNames.indexOf(fromCls);
+  const suggested = fromIdx >= 0 && fromIdx < allNames.length-1 ? allNames[fromIdx+1] : '';
+  const toEl = document.getElementById('promo-to');
+  if(suggested) toEl.value = suggested;
+
+  const students = CACHE.students
+    .filter(s => s.cls === fromCls)
+    .sort((a,b) => a.lname.localeCompare(b.lname));
+
+  if(!students.length){
+    listWrap.style.display = 'none';
+    emptyMsg.style.display = 'block';
+    emptyMsg.querySelector('.empty-text').textContent = `No students in ${fromCls}`;
+    btn.disabled = true;
+    return;
+  }
+
+  emptyMsg.style.display = 'none';
+  listWrap.style.display = 'block';
+  btn.disabled = false;
+
+  document.getElementById('promo-list-title').textContent =
+    `${fromCls} — ${students.length} student${students.length!==1?'s':''}`;
+
+  const classOptions = CACHE.classes.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+
+  document.getElementById('promo-tbody').innerHTML = students.map((s,i) => `
+    <tr id="promo-row-${s.id}">
+      <td><input type="checkbox" class="promo-chk" value="${s.id}" checked onchange="updatePromoCount()"></td>
+      <td class="td-muted">${i+1}</td>
+      <td class="td-name">${s.lname} ${s.fname}</td>
+      <td><span class="badge badge-navy">${s.cls}</span></td>
+      <td>
+        <select class="promo-dest" data-id="${s.id}"
+          style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:var(--font)">
+          ${classOptions}
+        </select>
+      </td>
+      <td id="promo-status-${s.id}" style="font-size:12px;color:var(--text-muted)">Pending</td>
+    </tr>`).join('');
+
+  // Set all destination selects to the suggested to-class
+  document.querySelectorAll('.promo-dest').forEach(sel => {
+    sel.value = toEl.value || '';
+  });
+
+  // Keep destination selects in sync when promo-to changes
+  document.getElementById('promo-to').onchange = function(){
+    document.querySelectorAll('.promo-dest').forEach(sel => sel.value = this.value);
+  };
+
+  updatePromoCount();
+}
+
+function promoSelectAll(checked){
+  document.querySelectorAll('.promo-chk').forEach(c => c.checked = checked);
+  document.getElementById('promo-chk-all').checked = checked;
+  updatePromoCount();
+}
+
+function updatePromoCount(){
+  const total    = document.querySelectorAll('.promo-chk').length;
+  const selected = document.querySelectorAll('.promo-chk:checked').length;
+  document.getElementById('promo-selected-count').textContent = `${selected} of ${total} selected`;
+  document.getElementById('btn-promote').disabled = selected === 0;
+}
+
+async function runPromotion(){
+  const checked = [...document.querySelectorAll('.promo-chk:checked')];
+  if(!checked.length){ showAlert('No students selected.','warning'); return; }
+
+  const year = document.getElementById('promo-year').value;
+  const fromCls = document.getElementById('promo-from').value;
+
+  // Build promotion map: studentId → destClass
+  const promoMap = {};
+  checked.forEach(chk => {
+    const id = parseInt(chk.value);
+    const destSel = document.querySelector(`.promo-dest[data-id="${id}"]`);
+    promoMap[id] = destSel ? destSel.value : document.getElementById('promo-to').value;
+  });
+
+  // Validate all have destinations
+  const missing = Object.entries(promoMap).filter(([,v]) => !v);
+  if(missing.length){ showAlert('Some students have no destination class selected.','warning'); return; }
+
+  // Confirmation
+  const destClasses = [...new Set(Object.values(promoMap))];
+  const msg = `Promote ${checked.length} student${checked.length!==1?'s':''} from ${fromCls}?
+
+Destinations: ${destClasses.join(', ')}
+
+This will update their class. Score history is preserved.`;
+  if(!confirm(msg)) return;
+
+  const btn = document.getElementById('btn-promote');
+  btn.textContent = 'Promoting…'; btn.disabled = true;
+
+  let success = 0, failed = 0;
+  for(const [idStr, destCls] of Object.entries(promoMap)){
+    const id = parseInt(idStr);
+    const statusEl = document.getElementById(`promo-status-${id}`);
+    try {
+      await sbPatch('students', `id=eq.${id}`, {cls: destCls});
+      // Update in-memory cache
+      const student = CACHE.students.find(s => s.id === id);
+      if(student) student.cls = destCls;
+      if(statusEl){ statusEl.textContent = `✓ → ${destCls}`; statusEl.style.color = 'var(--green)'; }
+      // Uncheck after success
+      const chk = document.querySelector(`.promo-chk[value="${id}"]`);
+      if(chk) chk.disabled = true;
+      success++;
+    } catch(e){
+      if(statusEl){ statusEl.textContent = '✗ Failed'; statusEl.style.color = 'var(--red)'; }
+      failed++;
+    }
+  }
+
+  btn.textContent = '🎓 Promote Selected'; btn.disabled = false;
+  const msg2 = `${success} student${success!==1?'s':''} promoted successfully${failed?`, ${failed} failed`:'.'}`; 
+  showAlert(msg2, failed ? 'warning' : 'success');
+
+  // Refresh dashboard and students page
+  renderDashboard();
+  renderStudentsTable();
+}
 
 </script>
 </body>
