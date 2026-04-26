@@ -892,6 +892,13 @@ const CLASSES_CONFIG = {
 // ── Direct Supabase REST API (no SDK — avoids Promise hang issues) ────────────
 let SB_TOKEN = localStorage.getItem('mses_sb_token') || null;
 
+// ── Chunk array into batches ─────────────────────────────────────────────────
+function chunkArray(arr, size){
+  const chunks = [];
+  for(let i=0; i<arr.length; i+=size) chunks.push(arr.slice(i,i+size));
+  return chunks;
+}
+
 function sbHeaders(extra={}){
   const h = {
     'apikey': SUPABASE_ANON,
@@ -2353,17 +2360,20 @@ async function impConfirm(){
         toScore.push({fname: fn, lname: ln, scores: s.scores});
       }
 
-      // Bulk insert new students
+      // Bulk insert new students in batches of 50
       if(toInsert.length > 0){
-        const inserted = await sbInsert('students', toInsert);
-        const rows = Array.isArray(inserted) ? inserted : [inserted];
-        rows.forEach(r => {
-          const key = `${r.fname.trim().toUpperCase()}|${r.lname.trim().toUpperCase()}|${r.cls}`;
-          lookup[key] = r;
-          CACHE.students.push(r);
-          clsNew++;
-          totalNew++;
-        });
+        for(const batch of chunkArray(toInsert, 50)){
+          const inserted = await sbInsert('students', batch);
+          const rows = Array.isArray(inserted) ? inserted : [inserted];
+          rows.forEach(r => {
+            if(!r || !r.id) return;
+            const key = `${r.fname.trim().toUpperCase()}|${r.lname.trim().toUpperCase()}|${r.cls}`;
+            lookup[key] = r;
+            CACHE.students.push(r);
+            clsNew++;
+            totalNew++;
+          });
+        }
       }
 
       // Upsert scores for all students in this class
@@ -2387,7 +2397,10 @@ async function impConfirm(){
       }
 
       if(scoreRows.length > 0){
-        await sbUpsert('scores', scoreRows, 'student_id,term,year,subject');
+        // Upsert scores in batches of 100
+        for(const batch of chunkArray(scoreRows, 100)){
+          await sbUpsert('scores', batch, 'student_id,term,year,subject');
+        }
         // Update local score cache
         scoreRows.forEach(r => {
           if(!CACHE.scores[r.student_id]) CACHE.scores[r.student_id] = {};
@@ -2414,7 +2427,7 @@ async function impConfirm(){
     }));
 
   } catch(err){
-    showAlert('Import failed: ' + err.message, 'danger');
+    showAlert('Import failed at class ' + (impParsedClasses[totalNew > 0 ? 1 : 0]?.cls||'?') + ': ' + err.message, 'danger');
     console.error('Import error:', err);
     return;
   }
