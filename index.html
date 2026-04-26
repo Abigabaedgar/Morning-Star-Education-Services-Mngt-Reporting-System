@@ -570,6 +570,17 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <option>JY1</option><option>JY2</option><option>JY3</option>
             <option>JY4</option><option>JY5</option><option>JY6</option>
           </select>
+          <select id="student-year-filter" onchange="renderStudentsTable()" style="width:110px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font)">
+            <option value="">All years</option>
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2027">2027</option>
+          </select>
+          <select id="student-term-filter" onchange="renderStudentsTable()" style="width:160px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font)">
+            <option value="midterm">Midterm scores</option>
+            <option value="bot">BOT scores</option>
+            <option value="end">End of Term scores</option>
+          </select>
 
         </div>
         <div class="card" style="padding:0">
@@ -607,6 +618,11 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <option>KY1</option><option>KY2</option><option>KY3</option>
             <option>JY1</option><option>JY2</option><option>JY3</option>
             <option>JY4</option><option>JY5</option><option>JY6</option>
+          </select>
+          <select id="scores-year-filter" onchange="renderScoresPage()" style="width:110px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font)">
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2027">2027</option>
           </select>
           <select id="scores-term-filter" onchange="renderScoresPage()" style="width:170px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font)">
             <option value="midterm">Midterm (30%)</option>
@@ -885,6 +901,10 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
               <div class="form-group"><label>Email</label><input type="text" id="cfg-email" value="morningstarjuniorschool@gmail.com"></div>
               <div class="form-group"><label>Head Teacher</label><input type="text" id="cfg-head" value="Omara Robinson"></div>
               <div class="form-group"><label>Current Year</label><input type="text" id="cfg-year" value="2026"></div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label>Next Term Begins On <span style="font-weight:400;color:var(--text-muted)">(shown on End of Term reports only)</span></label>
+                <input type="text" id="cfg-next-term" placeholder="e.g. 3rd February 2027">
+              </div>
             </div>
             <button class="btn btn-primary" style="margin-top:14px" onclick="saveSettings()">Save Settings</button>
           </div>
@@ -1234,6 +1254,31 @@ function calcStudentSummary(studentId, term){
 
 let currentReportStudentId = null;
 
+// Year-aware summary — used by Students and Scores pages
+function calcStudentSummaryForYear(studentId, term, year){
+  const sc = getCachedScores(studentId, term, year || '2026');
+  const student = DB.students.find(s => s.id === studentId);
+  if(!student) return null;
+  const subs = getSubjectsForClass(student.cls);
+  let total = 0, aggTotal = 0, count = 0;
+  const subResults = [];
+  subs.forEach(sub => {
+    const v = sc[sub];
+    if(v !== undefined && v !== null && v !== ''){
+      const g = getGrade(Number(v));
+      total += Number(v);
+      aggTotal += getAgg(g.grade);
+      count++;
+      subResults.push({sub, score:Number(v), grade:g.grade, comment:g.comment});
+    } else {
+      subResults.push({sub, score:null, grade:null, comment:null});
+    }
+  });
+  const div = count > 0 ? getDivision(aggTotal, count) : null;
+  const avg = count > 0 ? Math.round(total / count) : null;
+  return {total, aggTotal, count, div, avg, subResults};
+}
+
 // ══════════════════════════════════════════
 //  NAVIGATION
 // ══════════════════════════════════════════
@@ -1269,6 +1314,7 @@ function showPage(name, navEl){
   if(name==='scores') renderScoresPage();
   if(name==='import') renderImportLog();
   if(name==='reports') populateReportDropdown();
+  if(name==='settings') populateSettingsForm();
 }
 
 // ══════════════════════════════════════════
@@ -1369,9 +1415,12 @@ async function deleteStudent(id){
 function renderStudentsTable(){
   const q = (document.getElementById('student-search')?.value || '').toLowerCase();
   const cf = document.getElementById('student-class-filter')?.value || '';
+  const yf = document.getElementById('student-year-filter')?.value || '';
+  const tf = document.getElementById('student-term-filter')?.value || 'midterm';
   const filtered = DB.students.filter(s => {
     const name = (s.fname+' '+s.lname).toLowerCase();
-    return (!q || name.includes(q) || (s.paycode||'').includes(q)) && (!cf || s.cls === cf);
+    const yearMatch = !yf || (s.year || '2026') === yf;
+    return (!q || name.includes(q) || (s.paycode||'').includes(q)) && (!cf || s.cls === cf) && yearMatch;
   });
   const tbody = document.getElementById('students-tbody');
   if(!filtered.length){
@@ -1379,7 +1428,7 @@ function renderStudentsTable(){
     return;
   }
   tbody.innerHTML = filtered.map((s,i) => {
-    const summary = calcStudentSummary(s.id, 'midterm');
+    const summary = calcStudentSummaryForYear(s.id, tf, s.year || '2026');
     const divHtml = summary && summary.div ? `<span class="badge badge-div${summary.div}">Div ${summary.div}</span>` : '<span class="text-muted">—</span>';
     const totHtml = summary && summary.count > 0 ? `<strong>${summary.total}</strong> <span class="text-muted" style="font-size:11px">(${summary.count} subj.)</span>` : '<span class="text-muted">—</span>';
     return `<tr>
@@ -1394,7 +1443,6 @@ function renderStudentsTable(){
         <div class="flex gap-10 items-center">
           <button class="btn btn-xs" onclick="openScoresFor(${s.id})">Scores</button>
           <button class="btn btn-xs btn-primary" onclick="openReportFor(${s.id})">Report</button>
-          
           <button class="btn btn-xs btn-danger" onclick="deleteStudent(${s.id})">Del</button>
         </div>
       </td>
@@ -1513,6 +1561,7 @@ function renderScoresPage(){
   const q = (document.getElementById('scores-search')?.value || '').toLowerCase();
   const cf = document.getElementById('scores-class-filter')?.value || '';
   const term = document.getElementById('scores-term-filter')?.value || 'midterm';
+  const year = document.getElementById('scores-year-filter')?.value || '2026';
   const area = document.getElementById('scores-content');
   if(!area) return;
 
@@ -1526,6 +1575,27 @@ function renderScoresPage(){
     const studs = byClass[cls];
     const subs = getSubjectsForClass(cls);
     const shortSub = s => s.replace('Religious Education','RE').replace('Literacy 1A','Lit1A').replace('Literacy 1B','Lit1B').replace('Social Development','Soc Dev').replace('Health Habits','Health').replace('Project Work','Project').replace('Mathematics','Math').replace('Social Studies','SST');
+
+    // Check if ANY student in this class has scores for this term/year
+    const hasAnyScores = studs.some(s => {
+      const sc = getCachedScores(s.id, term, year);
+      return Object.keys(sc).length > 0;
+    });
+
+    if(!hasAnyScores){
+      return `<div class="card" style="margin-bottom:16px;padding:0">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+          <span class="badge badge-navy" style="font-size:13px">${cls}</span>
+          <span style="font-size:13px;color:var(--text-muted)">${CLASSES_CONFIG[cls]?.label||cls} · ${studs.length} students</span>
+          <span style="margin-left:auto;font-size:12px;color:var(--text-light)">No scores uploaded for this term / year</span>
+        </div>
+        <div class="empty-state" style="padding:24px">
+          <div class="empty-icon" style="font-size:28px">📭</div>
+          <div class="empty-text">No ${({midterm:'Midterm',bot:'BOT',end:'End of Term'})[term]} scores for ${year}</div>
+          <div class="empty-sub">Upload an assessment file under Import Scores</div>
+        </div>
+      </div>`;
+    }
     return `<div class="card" style="margin-bottom:16px;padding:0">
       <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
         <div><span class="badge badge-navy" style="font-size:13px;margin-right:8px">${cls}</span><span style="font-size:13px;color:var(--text-muted)">${CLASSES_CONFIG[cls]?.label||cls} · ${studs.length} students</span></div>
@@ -1541,9 +1611,8 @@ function renderScoresPage(){
         </tr></thead>
         <tbody>
           ${studs.map(s => {
-            const year = document.getElementById('scores-term-filter')?.dataset?.year || '2026';
             const sc = getCachedScores(s.id, term, year);
-            const summary = calcStudentSummary(s.id, term);
+            const summary = calcStudentSummaryForYear(s.id, term, year);
             return `<tr>
               <td class="td-name">${s.fname} ${s.lname}</td>
               ${subs.map(sub => {
@@ -1702,7 +1771,7 @@ function buildReportHTML(studentId, term){
       </div>
     </div>
     <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--text-muted)">
-      <strong>Next term begins on:</strong> ${S.nextTermDate}
+      ${term === 'end' ? `<strong>Next term begins on:</strong> ${S.nextTermDate || '—'}` : ''}
     </div>
   </div>`;
 }
@@ -1742,7 +1811,8 @@ function printCurrentReport(){
   w.document.write(`<!DOCTYPE html><html><head><title>Report Card</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',Arial,sans-serif;padding:20px;color:#1a202c;font-size:12px}
+    body{font-family:'Segoe UI',Arial,sans-serif;padding:20px;color:#1a202c;font-size:12px;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
     .report-paper{max-width:680px;margin:0 auto;padding:24px}
     .report-school-name{font-size:17px;font-weight:800;color:#0d3b6e;text-align:center}
     .report-school-sub{font-size:12px;font-weight:600;color:#0d3b6e;text-align:center}
@@ -1752,16 +1822,16 @@ function printCurrentReport(){
     .report-meta-row{display:flex;gap:12px;background:#f8f9fa;border:1px solid #e4e8ed;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:12px;justify-content:space-between}
     .report-meta-item strong{display:block;font-size:10px;text-transform:uppercase;color:#5a6473;letter-spacing:.05em;margin-bottom:2px}
     .report-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px}
-    .report-table th{background:#0d3b6e;color:#fff;padding:7px 10px;text-align:left}
+    .report-table th{background:#0d3b6e!important;color:#fff!important;padding:7px 10px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .report-table td{padding:6px 10px;border-bottom:1px solid #e4e8ed}
-    .report-table tr:nth-child(even) td{background:#f8f9fa}
-    .report-table tfoot td{background:#f0f2f5;font-weight:700}
+    .report-table tr:nth-child(even) td{background:#f8f9fa!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .report-table tfoot td{background:#f0f2f5!important;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .report-footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:11px;margin-top:14px}
     .sig-line{border-top:1px dashed #e4e8ed;margin-top:18px;padding-top:4px;color:#5a6473}
     .report-promotion{font-size:13px;font-weight:700;color:#0d3b6e;text-align:center;letter-spacing:.05em;margin:14px 0;padding:10px;border:2px dashed #c9a84c;border-radius:6px}
-    .gkey{display:inline-block;padding:2px 7px;border-radius:4px;background:#f0f2f5;color:#5a6473;font-size:10px;margin:2px}
+    .gkey{display:inline-block;padding:2px 7px;border-radius:4px;background:#f0f2f5!important;color:#5a6473;font-size:10px;margin:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .grading-key-row{margin-bottom:14px}
-    @media print{body{padding:0}.report-paper{padding:10px}}
+    @media print{body{padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.report-paper{padding:10px}}
   </style></head><body>${html}</body></html>`);
   w.document.close();
   w.focus();
@@ -1941,7 +2011,8 @@ function printBulkReports(){
 
   const PRINT_STYLES = `
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1a202c;font-size:12px}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1a202c;font-size:12px;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
     .report-paper{
       max-width:680px;margin:0 auto;padding:24px;
       page-break-after:always;
@@ -1952,24 +2023,28 @@ function printBulkReports(){
     .report-addr{font-size:10px;color:#5a6473;text-align:center;line-height:1.7;margin-bottom:10px}
     .report-divider{border:none;border-top:2px solid #0d3b6e;margin:10px 0}
     .report-term-title{text-align:center;font-size:14px;font-weight:700;letter-spacing:.08em;margin:8px 0}
-    .report-meta-row{display:flex;gap:12px;background:#f8f9fa;border:1px solid #e4e8ed;
-      border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:12px;justify-content:space-between}
+    .report-meta-row{display:flex;gap:12px;background:#f8f9fa!important;border:1px solid #e4e8ed;
+      border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:12px;justify-content:space-between;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
     .report-meta-item strong{display:block;font-size:10px;text-transform:uppercase;
       color:#5a6473;letter-spacing:.05em;margin-bottom:2px}
     .report-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px}
-    .report-table th{background:#0d3b6e;color:#fff;padding:7px 10px;text-align:left}
+    .report-table th{background:#0d3b6e!important;color:#fff!important;padding:7px 10px;text-align:left;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
     .report-table td{padding:6px 10px;border-bottom:1px solid #e4e8ed}
-    .report-table tr:nth-child(even) td{background:#f8f9fa}
-    .report-table tfoot td{background:#f0f2f5;font-weight:700}
+    .report-table tr:nth-child(even) td{background:#f8f9fa!important;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .report-table tfoot td{background:#f0f2f5!important;font-weight:700;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
     .report-footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:11px;margin-top:14px}
     .sig-line{border-top:1px dashed #e4e8ed;margin-top:18px;padding-top:4px;color:#5a6473}
     .report-promotion{font-size:13px;font-weight:700;color:#0d3b6e;text-align:center;
       letter-spacing:.05em;margin:14px 0;padding:10px;border:2px dashed #c9a84c;border-radius:6px}
-    .gkey{display:inline-block;padding:2px 7px;border-radius:4px;background:#f0f2f5;
-      color:#5a6473;font-size:10px;margin:2px}
+    .gkey{display:inline-block;padding:2px 7px;border-radius:4px;background:#f0f2f5!important;
+      color:#5a6473;font-size:10px;margin:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .grading-key-row{margin-bottom:14px}
     @media print{
-      body{padding:0}
+      body{padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
       .report-paper{padding:10px;max-width:100%}
     }
   `;
@@ -1988,6 +2063,18 @@ function printBulkReports(){
 //  SETTINGS
 // ══════════════════════════════════════════
 
+function populateSettingsForm(){
+  const S = CACHE.settings || {};
+  const set = (id, key) => { const el = document.getElementById(id); if(el && S[key] !== undefined) el.value = S[key]; };
+  set('cfg-name',      'schoolName');
+  set('cfg-campus',    'campus');
+  set('cfg-phone',     'phone');
+  set('cfg-email',     'email');
+  set('cfg-head',      'headteacher');
+  set('cfg-year',      'year');
+  set('cfg-next-term', 'nextTermDate');
+}
+
 async function saveSettings(){
   const updates = [
     {key:'schoolName',  value: document.getElementById('cfg-name').value},
@@ -1996,6 +2083,7 @@ async function saveSettings(){
     {key:'email',       value: document.getElementById('cfg-email').value},
     {key:'headteacher', value: document.getElementById('cfg-head').value},
     {key:'year',        value: document.getElementById('cfg-year').value},
+    {key:'nextTermDate',value: document.getElementById('cfg-next-term').value},
   ];
   try {
     await sbUpsert('settings', updates, 'key');
