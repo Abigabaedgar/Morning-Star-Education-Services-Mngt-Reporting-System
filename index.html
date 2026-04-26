@@ -512,6 +512,10 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
         <span class="nav-icon">👥</span>
         <span>Users</span>
       </a>
+      <a class="nav-item" onclick="showPage('paycodes',this)" id="nav-paycodes">
+        <span class="nav-icon">🪪</span>
+        <span>Payment Codes</span>
+      </a>
       <a class="nav-item" onclick="showPage('settings',this)">
         <span class="nav-icon">⚙</span>
         <span>Settings</span>
@@ -1073,6 +1077,64 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
         </div>
       </div>
 
+      <!-- ── PAYMENT CODES ── -->
+      <div id="page-paycodes" class="page">
+
+        <!-- Toolbar -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="font-size:15px;font-weight:700">Payment Codes</div>
+            <div style="font-size:12px;color:var(--text-muted)">Click any code cell to edit inline · Enter or Tab to save</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="downloadPaycodes('missing')">⬇ Download Missing</button>
+            <button class="btn btn-sm" onclick="downloadPaycodes('all')">⬇ Download All</button>
+            <label class="btn btn-sm btn-primary" style="cursor:pointer">
+              ⬆ Upload Codes
+              <input type="file" accept=".xlsx,.xls" style="display:none" onchange="uploadPaycodes(event)">
+            </label>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="toolbar" style="margin-bottom:12px">
+          <div class="search-input-wrap" style="max-width:260px">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="pc-search" placeholder="Search name..." oninput="renderPaycodesTable()">
+          </div>
+          <select id="pc-class" onchange="renderPaycodesTable()"
+            style="padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font)">
+            <option value="">All classes</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="pc-missing-only" onchange="renderPaycodesTable()">
+            Show missing only
+          </label>
+          <span id="pc-count" style="font-size:12px;color:var(--text-muted);margin-left:auto"></span>
+        </div>
+
+        <!-- Table -->
+        <div class="card" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:40px">#</th>
+                  <th>Name</th>
+                  <th style="width:90px">Class</th>
+                  <th>Payment Code</th>
+                  <th style="width:80px">Status</th>
+                </tr>
+              </thead>
+              <tbody id="pc-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Upload result -->
+        <div id="pc-upload-result" style="margin-top:14px;display:none"></div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app-shell -->
@@ -1215,7 +1277,8 @@ function applyRoleUI(){
 
   // Hide nav items based on role
   const navItems = {
-    'nav-users': ['admin'],
+    'nav-users':     ['admin'],
+    'nav-paycodes':  ['admin'],
   };
   Object.entries(navItems).forEach(([id, roles]) => {
     const el = document.getElementById(id);
@@ -1568,6 +1631,7 @@ const PAGE_META = {
   scores:{title:'Scores',sub:'View student assessment scores by class and term'},
   reports:{title:'Report Cards',sub:'Generate and print student report cards'},
   promotions:{title:'Promotions',sub:'Promote students to the next class at end of year'},
+  paycodes:{title:'Payment Codes',sub:'Manage and assign student payment codes'},
   users:{title:'Staff Accounts',sub:'Manage teacher and head teacher login access'},
   import:{title:'Import Scores',sub:'Upload Excel files to bulk-import scores'},
   settings:{title:'Settings',sub:'School configuration and data management'}
@@ -1597,6 +1661,7 @@ function showPage(name, navEl){
   if(name==='settings') populateSettingsForm();
   if(name==='promotions') { renderPromotionDropdowns(); renderPromotionList(); }
   if(name==='users') { if(isAdmin()) renderUsersPage(); else showAlert('Access denied.','danger'); }
+  if(name==='paycodes') { if(isAdmin()) renderPaycodesTable(); else showAlert('Access denied.','danger'); }
 }
 
 // ══════════════════════════════════════════
@@ -1933,6 +1998,17 @@ function filterReportStudents(){
 }
 
 function populateReportDropdown(){
+  // Sync year dropdowns to current year from settings
+  const curYear = CACHE.settings?.year || '2026';
+  ['rep-year','bulk-year'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    // Add year to options if not present
+    if(![...el.options].some(o => o.value === curYear)){
+      el.insertAdjacentHTML('afterbegin', `<option value="${curYear}">${curYear}</option>`);
+    }
+    el.value = curYear;
+  });
   // Populate class filter
   const clsSel = document.getElementById('rep-class');
   if(clsSel){
@@ -1954,14 +2030,16 @@ function populateReportDropdown(){
   if(cur){ sel.value = cur; renderReportCard(); }
 }
 
-function buildReportHTML(studentId, term){
+function buildReportHTML(studentId, term, year){
+  year = year || document.getElementById('rep-year')?.value || '2026';
   const student = DB.students.find(s => s.id === studentId);
   if(!student) return '';
-  const summary = calcStudentSummary(studentId, term);
-  const sc = getCachedScores(studentId, term, '2026');
+  const summary = calcStudentSummaryForYear(studentId, term, year);
+  const sc = getCachedScores(studentId, term, year);
   const subs = getSubjectsForClass(student.cls);
   const termLabel = {midterm:'MIDTERM REPORT', bot:'BEGINNING OF TERM REPORT', end:'END OF TERM REPORT'}[term];
-  const termPeriod = {midterm:'Term I — 2026', bot:'BOT — 2026', end:'Term III — 2025'}[term];
+  const termNum = {midterm:'I', bot:'I', end:'III'}[term] || 'I';
+  const termPeriod = `Term ${termNum} — ${year}`;
   const S = DB.settings;
   const scoredSubs = summary ? summary.subResults.filter(r => r.score !== null) : [];
   const totalAgg = scoredSubs.reduce((a,r) => a + getAgg(r.grade), 0);
@@ -2073,7 +2151,17 @@ async function renderReportCard(){
   delete CACHE.scores[sid];
   await loadScoresForStudent(sid);
   currentReportStudentId = sid;
-  area.innerHTML = buildReportHTML(sid, term);
+  // Check if student has any scores for selected term/year
+  const sc = getCachedScores(sid, term, year);
+  if(!Object.keys(sc).length){
+    area.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <div class="empty-text">No scores for ${({midterm:'Midterm',bot:'BOT',end:'End of Term'})[term]} ${year}</div>
+      <div class="empty-sub">Try a different term or year, or upload scores under Import Scores</div>
+    </div>`;
+    return;
+  }
+  area.innerHTML = buildReportHTML(sid, term, year);
 }
 
 function openReportFor(sid){
@@ -2088,7 +2176,8 @@ function printCurrentReport(){
   const sid = parseInt(document.getElementById('rep-student')?.value) || currentReportStudentId;
   const term = document.getElementById('rep-term')?.value || 'midterm';
   if(!sid){ showAlert('Select a student first.','warning'); return; }
-  const html = buildReportHTML(sid, term);
+  const year = document.getElementById('rep-year')?.value || '2026';
+  const html = buildReportHTML(sid, term, year);
   const w = window.open('', '_blank');
   w.document.write(`<!DOCTYPE html><html><head><title>Report Card</title>
   <style>
@@ -2287,7 +2376,7 @@ function printBulkReports(){
   const prevYear  = repYearEl ? repYearEl.value : '2026';
   if(repYearEl) repYearEl.value = year;
 
-  const cards = checked.map(c => buildReportHTML(parseInt(c.value), term)).join('');
+  const cards = checked.map(c => buildReportHTML(parseInt(c.value), term, year)).join('');
 
   if(repYearEl) repYearEl.value = prevYear;
 
@@ -2558,7 +2647,7 @@ function refreshClassDropdowns(){
   const names = getAllClassNames().sort();
   const optionsHtml = '<option value="">All classes</option>' +
     names.map(n=>`<option value="${n}">${n}</option>`).join('');
-  ['student-class-filter','scores-class-filter','class-filter-sel','bulk-class','promo-from','promo-to','u-class'].forEach(id => {
+  ['student-class-filter','scores-class-filter','class-filter-sel','bulk-class','promo-from','promo-to','u-class','pc-class'].forEach(id => {
     const el = document.getElementById(id);
     if(el){ const cur=el.value; el.innerHTML=optionsHtml; el.value=cur; }
   });
@@ -2740,7 +2829,7 @@ function impProcessFile(file){
 
 function impParseSheet(rows){
   const classes = [];
-  let currentCls = null, subjectCols = [], students = [];
+  let currentCls = null, subjectCols = [], students = [], paycodeCol = -1;
 
   for(let i = 0; i < rows.length; i++){
     const row = rows[i];
@@ -2765,9 +2854,12 @@ function impParseSheet(rows){
     // ── Detect column header row: first cell is "NO" ──
     if(first === 'NO' || first === 'No' || first === 'NO.'){
       subjectCols = [];
+      paycodeCol = -1;
       for(let c = 0; c < row.length; c++){
         const v = row[c] !== null ? String(row[c]).trim().toUpperCase() : '';
-        if(SUBJ_MAP[v]){
+        if(v === 'PAYMENT CODE' || v === 'PAYCODE' || v === 'PAY CODE' || v === 'CODE'){
+          paycodeCol = c;
+        } else if(SUBJ_MAP[v]){
           subjectCols.push({col: c, name: SUBJ_MAP[v]});
         }
       }
@@ -2789,8 +2881,11 @@ function impParseSheet(rows){
           scores[name] = parseFloat(v);
         }
       });
+      const paycode = paycodeCol >= 0 && row[paycodeCol] !== null
+        ? String(row[paycodeCol]).trim()
+        : '';
       if(Object.keys(scores).length > 0){
-        students.push({fname: firstname, lname: surname, scores});
+        students.push({fname: firstname, lname: surname, scores, paycode});
       }
     }
   }
@@ -2914,10 +3009,10 @@ async function impConfirm(){
         if(!lookup[key]){
           toInsert.push({
             fname: fn, lname: ln, cls: cls.cls,
-            paycode: '', teacher: clsTeacher, year, notes: ''
+            paycode: s.paycode || '', teacher: clsTeacher, year, notes: ''
           });
         }
-        toScore.push({fname: fn, lname: ln, scores: s.scores});
+        toScore.push({fname: fn, lname: ln, scores: s.scores, paycode: s.paycode || ''});
       }
 
       // Bulk insert new students in batches of 50
@@ -2933,6 +3028,21 @@ async function impConfirm(){
             clsNew++;
             totalNew++;
           });
+        }
+      }
+
+      // Update paycode for existing students if import contains one
+      for(const s of toScore){
+        if(!s.paycode) continue;
+        const key = `${s.fname}|${s.lname}|${cls.cls}`;
+        const student = lookup[key];
+        if(!student || !student.id) continue;
+        // Only patch if paycode differs
+        if((student.paycode || '') !== s.paycode){
+          try {
+            await sbPatch('students', `id=eq.${student.id}`, {paycode: s.paycode});
+            student.paycode = s.paycode;  // update cache
+          } catch(e){ console.warn('paycode patch failed', e); }
         }
       }
 
@@ -3027,9 +3137,12 @@ const TERM_KEY = {
 const ALL_CLASSES = ['JY1','JY2','JY3','JY4','JY5','JY6','KY1','KY2','KY3'];
 
 function openTemplateModal(){
-  // Build class checkboxes
+  // Build class checkboxes dynamically from registered classes
   const box = document.getElementById('tmpl-class-checkboxes');
-  box.innerHTML = ALL_CLASSES.map(c => `
+  const names = CACHE.classes.length > 0
+    ? CACHE.classes.map(c => c.name).sort()
+    : ALL_CLASSES;  // fallback if cache not loaded yet
+  box.innerHTML = names.map(c => `
     <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;
       background:var(--gray-50);border:1px solid var(--border);border-radius:var(--radius);
       padding:4px 10px;user-select:none">
@@ -3075,6 +3188,40 @@ function downloadTemplateCustom(){
     const ws   = wb.Sheets[cls];
     const cell = ws['A2'];
     if(cell) cell.v = `${cls} ${termLabel} ${year}`;
+  });
+
+  // Inject PAYMENT CODE column into each selected sheet
+  checked.forEach(cls => {
+    if(!wb.SheetNames.includes(cls)) return;
+    const ws = wb.Sheets[cls];
+    // Find the header row (row with "NO" in column A) using sheet data
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+    for(let r = range.s.r; r <= range.e.r; r++){
+      const cellAddr = XLSX.utils.encode_cell({r, c: 0});
+      const cell = ws[cellAddr];
+      if(cell && String(cell.v).trim().toUpperCase() === 'NO'){
+        // Insert PAYMENT CODE as the 4th column (index 3), shifting subjects right
+        // First shift all columns from index 3 onwards right by 1
+        for(let col = range.e.c; col >= 3; col--){
+          for(let row = r; row <= range.e.r; row++){
+            const from = XLSX.utils.encode_cell({r: row, c: col});
+            const to   = XLSX.utils.encode_cell({r: row, c: col + 1});
+            if(ws[from]){ ws[to] = ws[from]; delete ws[from]; }
+          }
+        }
+        // Write PAYMENT CODE header
+        ws[XLSX.utils.encode_cell({r, c: 3})] = {v: 'PAYMENT CODE', t: 's'};
+        // Write blank cells for all student rows
+        for(let row = r + 1; row <= range.e.r; row++){
+          const addr = XLSX.utils.encode_cell({r: row, c: 3});
+          if(!ws[addr]) ws[addr] = {v: '', t: 's'};
+        }
+        // Update sheet range
+        const newRange = {...range, e: {...range.e, c: range.e.c + 1}};
+        ws['!ref'] = XLSX.utils.encode_range(newRange);
+        break;
+      }
+    }
   });
 
   // Remove sheets not selected (keep INSTRUCTIONS always)
@@ -3557,6 +3704,244 @@ This will update their class. Score history is preserved.`;
   // Refresh dashboard and students page
   renderDashboard();
   renderStudentsTable();
+}
+
+
+// ══════════════════════════════════════════
+//  PAYMENT CODES PAGE
+// ══════════════════════════════════════════
+
+function renderPaycodesTable(){
+  const q       = (document.getElementById('pc-search')?.value || '').toLowerCase();
+  const cls     = document.getElementById('pc-class')?.value || '';
+  const missing = document.getElementById('pc-missing-only')?.checked || false;
+  const tbody   = document.getElementById('pc-tbody');
+  const countEl = document.getElementById('pc-count');
+  if(!tbody) return;
+
+  let students = [...CACHE.students].sort((a,b) => {
+    if(a.cls < b.cls) return -1;
+    if(a.cls > b.cls) return 1;
+    return a.lname.localeCompare(b.lname);
+  });
+
+  if(cls)     students = students.filter(s => s.cls === cls);
+  if(missing) students = students.filter(s => !s.paycode || !s.paycode.trim());
+  if(q)       students = students.filter(s =>
+    (s.fname+' '+s.lname).toLowerCase().includes(q) ||
+    (s.paycode||'').toLowerCase().includes(q)
+  );
+
+  const missing_count = CACHE.students.filter(s => !s.paycode || !s.paycode.trim()).length;
+  if(countEl) countEl.textContent =
+    `${students.length} shown · ${missing_count} missing code${missing_count!==1?'s':''}`;
+
+  if(!students.length){
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:36px;color:var(--text-muted)">
+      ${missing ? 'All students have payment codes! 🎉' : 'No students found.'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = students.map((s, i) => {
+    const hasCode = s.paycode && s.paycode.trim();
+    return `<tr id="pc-row-${s.id}">
+      <td class="td-muted">${i+1}</td>
+      <td class="td-name">${s.lname} ${s.fname}</td>
+      <td><span class="badge badge-navy">${s.cls}</span></td>
+      <td>
+        <div id="pc-display-${s.id}" style="display:flex;align-items:center;gap:8px">
+          <span style="font-family:monospace;font-size:13px;color:${hasCode?'var(--text)':'var(--text-light)'};
+            font-style:${hasCode?'normal':'italic'}">${hasCode ? s.paycode : 'not set'}</span>
+          <button class="btn btn-xs" onclick="startEditPaycode(${s.id})"
+            style="opacity:0.5" title="Edit">✏️</button>
+        </div>
+        <div id="pc-edit-${s.id}" style="display:none;align-items:center;gap:6px">
+          <input type="text" id="pc-input-${s.id}"
+            value="${s.paycode||''}"
+            placeholder="Enter code"
+            style="padding:5px 9px;font-size:13px;font-family:monospace;border:1px solid var(--border-focus);
+              border-radius:var(--radius);width:160px;outline:none"
+            onkeydown="if(event.key==='Enter'){savePaycode(${s.id});event.preventDefault()}
+                       else if(event.key==='Escape'){cancelEditPaycode(${s.id})}"
+            onblur="savePaycode(${s.id})">
+          <button class="btn btn-xs btn-primary" onclick="savePaycode(${s.id})">✓</button>
+          <button class="btn btn-xs" onclick="cancelEditPaycode(${s.id})">✕</button>
+        </div>
+      </td>
+      <td>
+        ${hasCode
+          ? '<span class="badge" style="background:#c8f7dc;color:#145c30">✓ Set</span>'
+          : '<span class="badge" style="background:#fee2e2;color:#991b1b">Missing</span>'}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function startEditPaycode(id){
+  document.getElementById('pc-display-'+id).style.display = 'none';
+  const editDiv = document.getElementById('pc-edit-'+id);
+  editDiv.style.display = 'flex';
+  const inp = document.getElementById('pc-input-'+id);
+  inp.focus();
+  inp.select();
+}
+
+function cancelEditPaycode(id){
+  document.getElementById('pc-edit-'+id).style.display = 'none';
+  document.getElementById('pc-display-'+id).style.display = 'flex';
+}
+
+async function savePaycode(id){
+  const inp = document.getElementById('pc-input-'+id);
+  if(!inp) return;
+  const newCode = inp.value.trim();
+  const student = CACHE.students.find(s => s.id === id);
+  if(!student) return;
+  if(newCode === (student.paycode||'')){ cancelEditPaycode(id); return; } // no change
+
+  try {
+    await sbPatch('students', `id=eq.${id}`, {paycode: newCode});
+    student.paycode = newCode;
+    // Re-render just this row by refreshing table
+    renderPaycodesTable();
+    showAlert(`Code saved for ${student.fname} ${student.lname}.`, 'success', 2000);
+  } catch(e){
+    showAlert('Failed to save: '+e.message, 'danger');
+    cancelEditPaycode(id);
+  }
+}
+
+// ── Download ──────────────────────────────────────────────────────────────────
+function downloadPaycodes(mode){
+  if(typeof XLSX === 'undefined'){ showAlert('SheetJS not loaded.','danger'); return; }
+
+  const cls = document.getElementById('pc-class')?.value || '';
+  let students = [...CACHE.students].sort((a,b) => {
+    if(a.cls < b.cls) return -1; if(a.cls > b.cls) return 1;
+    return a.lname.localeCompare(b.lname);
+  });
+  if(cls) students = students.filter(s => s.cls === cls);
+  if(mode === 'missing') students = students.filter(s => !s.paycode || !s.paycode.trim());
+
+  if(!students.length){
+    showAlert(mode === 'missing' ? 'No students with missing codes!' : 'No students found.', 'info');
+    return;
+  }
+
+  const rows = [
+    ['NO', 'CLASS', 'SURNAME', 'FIRSTNAME', 'PAYMENT CODE']
+  ];
+  students.forEach((s, i) => {
+    rows.push([i+1, s.cls, s.lname, s.fname, s.paycode||'']);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  // Style header row width hints
+  ws['!cols'] = [{wch:5},{wch:8},{wch:20},{wch:20},{wch:18}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Payment Codes');
+
+  const suffix = cls ? `_${cls}` : '';
+  const label  = mode === 'missing' ? 'Missing' : 'All';
+  XLSX.writeFile(wb, `PaymentCodes_${label}${suffix}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showAlert(`Downloaded ${students.length} student${students.length!==1?'s':''}.`);
+}
+
+// ── Upload / Bulk import ──────────────────────────────────────────────────────
+function uploadPaycodes(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  if(typeof XLSX === 'undefined'){ showAlert('SheetJS not loaded.','danger'); return; }
+
+  const reader = new FileReader();
+  reader.onload = async function(e){
+    try {
+      const wb   = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+
+      // Find header row
+      let headerRow = -1;
+      let codeCol = -1, surnameCol = -1, firstnameCol = -1, clsCol = -1;
+      for(let r = 0; r < Math.min(rows.length, 5); r++){
+        const cells = rows[r].map(v => String(v).trim().toUpperCase());
+        const cIdx = cells.findIndex(v => v === 'PAYMENT CODE' || v === 'PAYCODE' || v === 'CODE');
+        if(cIdx >= 0){
+          headerRow   = r;
+          codeCol     = cIdx;
+          surnameCol  = cells.findIndex(v => v === 'SURNAME' || v === 'LAST NAME' || v === 'LNAME');
+          firstnameCol= cells.findIndex(v => v === 'FIRSTNAME' || v === 'FIRST NAME' || v === 'FNAME');
+          clsCol      = cells.findIndex(v => v === 'CLASS' || v === 'CLS');
+          break;
+        }
+      }
+
+      if(headerRow < 0 || codeCol < 0){
+        showAlert('Could not find a PAYMENT CODE column in the file.', 'danger', 6000);
+        return;
+      }
+      if(surnameCol < 0 || firstnameCol < 0){
+        showAlert('Could not find SURNAME and FIRSTNAME columns.', 'danger', 6000);
+        return;
+      }
+
+      const dataRows = rows.slice(headerRow + 1).filter(r =>
+        r[surnameCol] || r[firstnameCol]
+      );
+
+      let updated = 0, skipped = 0, notFound = 0;
+      const resultLines = [];
+
+      for(const row of dataRows){
+        const surname   = String(row[surnameCol]||'').trim().toUpperCase();
+        const firstname = String(row[firstnameCol]||'').trim().toUpperCase();
+        const cls       = clsCol >= 0 ? String(row[clsCol]||'').trim().toUpperCase() : '';
+        const code      = String(row[codeCol]||'').trim();
+
+        if(!surname && !firstname) continue;
+        if(!code){ skipped++; continue; }
+
+        // Match student
+        const student = CACHE.students.find(s => {
+          const nameMatch = s.lname === surname && s.fname === firstname;
+          return cls ? nameMatch && s.cls === cls : nameMatch;
+        });
+
+        if(!student){ notFound++; resultLines.push(`⚠ Not found: ${surname} ${firstname}${cls?' ('+cls+')':''}`); continue; }
+
+        try {
+          await sbPatch('students', `id=eq.${student.id}`, {paycode: code});
+          student.paycode = code;
+          updated++;
+        } catch(e){
+          resultLines.push(`✗ Error saving ${surname} ${firstname}: ${e.message}`);
+        }
+      }
+
+      // Show result
+      const resultEl = document.getElementById('pc-upload-result');
+      resultEl.style.display = 'block';
+      const summaryClass = notFound > 0 ? 'alert-warning' : 'alert-success';
+      resultEl.innerHTML = `
+        <div class="alert ${summaryClass}" style="margin-bottom:8px">
+          ✅ <strong>${updated} code${updated!==1?'s':''} saved</strong>
+          ${skipped ? ` · ${skipped} rows had no code (skipped)` : ''}
+          ${notFound ? ` · ${notFound} student${notFound!==1?'s':''} not matched` : ''}
+        </div>
+        ${resultLines.length ? `<div style="font-size:12px;color:var(--text-muted);max-height:120px;overflow-y:auto;
+          padding:8px 12px;background:var(--gray-50);border-radius:var(--radius)">
+          ${resultLines.join('<br>')}
+        </div>` : ''}`;
+
+      renderPaycodesTable();
+      showAlert(`${updated} payment code${updated!==1?'s':''} updated.`);
+    } catch(err){
+      showAlert('Error reading file: '+err.message, 'danger');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  // Reset input so same file can be re-uploaded
+  event.target.value = '';
 }
 
 </script>
