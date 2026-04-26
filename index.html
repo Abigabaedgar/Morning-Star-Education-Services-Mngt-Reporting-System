@@ -863,6 +863,19 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 const SUPABASE_URL  = 'https://jchnkiqvtxnhdnknscok.supabase.co';   // ← paste your Project URL here
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjaG5raXF2dHhuaGRua25zY29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNjQ1MTgsImV4cCI6MjA5Mjc0MDUxOH0.0adCHRyolPjSwNIFfb7QbD_eOEmrY2GVtkVm8M895x8';
 
+// ── Grading scale ────────────────────────────────────────────────────────────
+const GRADING_SCALE = [
+  {min:90, max:100, grade:'D1', comment:'Excellent; outstanding achievement.'},
+  {min:80, max:89,  grade:'D2', comment:'Very good; aim higher.'},
+  {min:70, max:79,  grade:'C3', comment:'Strong performance; stay consistent.'},
+  {min:65, max:69,  grade:'C4', comment:'Solid work; improve accuracy.'},
+  {min:55, max:64,  grade:'C5', comment:'Good understanding; keep improving.'},
+  {min:50, max:54,  grade:'C6', comment:'Fair performance; needs effort.'},
+  {min:45, max:49,  grade:'P7', comment:'Basic understanding; improve consistency.'},
+  {min:35, max:44,  grade:'P8', comment:'Developing understanding; needs support.'},
+  {min:0,  max:34,  grade:'F',  comment:'Below expectations; needs significant improvement.'},
+];
+
 // ── Hardcoded class config — fallback when Supabase registry hasn't loaded yet
 const CLASSES_CONFIG = {
   KY1:{label:'Kindergarten Year 1',type:'kinder',subjects:['Reading','Numeracy','Writing','Social Development','Health Habits','Project Work']},
