@@ -238,7 +238,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 .score-pill{display:inline-block;min-width:32px;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:600;text-align:center}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
@@ -910,14 +909,60 @@ const CLASSES_CONFIG = {
   JY6:{label:'Junior Year 6',type:'junior',subjects:['English','Mathematics','Science','Social Studies']},
 }; // ← paste your anon key here
 
-const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storageKey: 'mses-auth-token',
-  }
-});
+// ── Direct Supabase REST API (no SDK — avoids Promise hang issues) ────────────
+let SB_TOKEN = localStorage.getItem('mses_sb_token') || null;
+
+function sbHeaders(extra={}){
+  const h = {
+    'apikey': SUPABASE_ANON,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation',
+    ...extra
+  };
+  if(SB_TOKEN) h['Authorization'] = 'Bearer ' + SB_TOKEN;
+  else h['Authorization'] = 'Bearer ' + SUPABASE_ANON;
+  return h;
+}
+
+async function sbGet(table, params=''){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, {headers: sbHeaders()});
+  if(!r.ok){ const e=await r.text(); throw new Error(e); }
+  return r.json();
+}
+
+async function sbInsert(table, body){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method:'POST', headers: sbHeaders(), body: JSON.stringify(body)
+  });
+  if(!r.ok){ const e=await r.text(); throw new Error(e); }
+  return r.json();
+}
+
+async function sbUpdate(table, id, body){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method:'PATCH', headers: sbHeaders(), body: JSON.stringify(body)
+  });
+  if(!r.ok){ const e=await r.text(); throw new Error(e); }
+  return r.json();
+}
+
+async function sbDelete(table, id){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method:'DELETE', headers: sbHeaders()
+  });
+  if(!r.ok){ const e=await r.text(); throw new Error(e); }
+  return true;
+}
+
+async function sbUpsert(table, body, onConflict){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?on_conflict=${onConflict}`, {
+    method:'POST',
+    headers: sbHeaders({'Prefer':'resolution=merge-duplicates,return=representation'}),
+    body: JSON.stringify(body)
+  });
+  if(!r.ok){ const e=await r.text(); throw new Error(e); }
+  return r.json();
+}
 
 // ── Auth helpers ──────────────────────────────────────────────────────────────
 async function doLogin(){
@@ -927,20 +972,39 @@ async function doLogin(){
   const err   = document.getElementById('login-error');
   err.style.display = 'none';
   btn.textContent = 'Signing in...'; btn.disabled = true;
-  const { error } = await _sb.auth.signInWithPassword({ email, password: pw });
-  btn.textContent = 'Sign in'; btn.disabled = false;
-  if(error){
-    err.textContent = error.message; err.style.display = 'block'; return;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {'apikey': SUPABASE_ANON, 'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password: pw})
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.error_description || data.msg || 'Login failed');
+    SB_TOKEN = data.access_token;
+    localStorage.setItem('mses_sb_token', SB_TOKEN);
+    localStorage.setItem('mses_sb_email', email);
+    showApp(email);
+  } catch(e){
+    err.textContent = e.message; err.style.display = 'block';
   }
-  // onAuthStateChange will handle showing the app
+  btn.textContent = 'Sign in'; btn.disabled = false;
 }
 
-async function doLogout(){
-  await _sb.auth.signOut();
+function doLogout(){
+  SB_TOKEN = null;
+  localStorage.removeItem('mses_sb_token');
+  localStorage.removeItem('mses_sb_email');
   document.getElementById('app-shell').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-email').value = '';
   document.getElementById('login-password').value = '';
+}
+
+function showApp(email){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'flex';
+  const el = document.getElementById('sidebar-user-email');
+  if(el) el.textContent = email || localStorage.getItem('mses_sb_email') || '';
 }
 
 // ── In-memory cache ───────────────────────────────────────────────────────────
@@ -1008,9 +1072,7 @@ async function loadAll(){
 // ── Score helpers ─────────────────────────────────────────────────────────────
 async function loadScoresForStudent(studentId){
   if(CACHE.scores[studentId]) return;
-  const { data } = await _sb.from('scores')
-    .select('term,year,subject,score')
-    .eq('student_id', studentId);
+  const data = await sbGet('scores', `student_id=eq.${studentId}&select=term,year,subject,score`);
   const byTerm = {};
   (data||[]).forEach(r => {
     const k = r.term+'|'+r.year;
@@ -1199,8 +1261,7 @@ async function saveStudent(){
 async function deleteStudent(id){
   if(!confirm('Delete this student? This will also remove all their scores.')) return;
   try {
-    const { error } = await _sb.from('students').delete().eq('id', id);
-    if(error) throw error;
+    await sbDelete('students', id);
     CACHE.students = CACHE.students.filter(s=>s.id!==id);
     delete CACHE.scores[id];
     renderStudentsTable();
@@ -1317,9 +1378,7 @@ async function saveScores(){
   });
   if(!saved){ showAlert('No scores entered.','warning'); return; }
   try {
-    const { error } = await _sb.from('scores')
-      .upsert(upserts, {onConflict:'student_id,term,year,subject'});
-    if(error) throw error;
+    await sbUpsert('scores', upserts, 'student_id,term,year,subject');
     // update cache
     const yr = document.getElementById('sc-year').value||'2026';
     if(!CACHE.scores[sid]) CACHE.scores[sid] = {};
@@ -1688,9 +1747,7 @@ async function saveSettings(){
     {key:'year',        value: document.getElementById('cfg-year').value},
   ];
   try {
-    const { error } = await _sb.from('settings')
-      .upsert(updates, {onConflict:'key'});
-    if(error) throw error;
+    await sbUpsert('settings', updates, 'key');
     updates.forEach(u => CACHE.settings[u.key] = u.value);
     showAlert('Settings saved.');
   } catch(e){ showAlert('Error: '+e.message,'danger'); }
@@ -1698,13 +1755,11 @@ async function saveSettings(){
 
 async function exportData(){
   try {
-    const [
-      {data:students},{data:classes},{data:settings},{data:scores}
-    ] = await Promise.all([
-      _sb.from('students').select('*'),
-      _sb.from('classes').select('*'),
-      _sb.from('settings').select('*'),
-      _sb.from('scores').select('*'),
+    const [students,classes,settings,scores] = await Promise.all([
+      sbGet('students',''),
+      sbGet('classes',''),
+      sbGet('settings',''),
+      sbGet('scores',''),
     ]);
     const blob = new Blob([JSON.stringify({students,classes,settings,scores},null,2)],{type:'application/json'});
     const a = document.createElement('a');
@@ -1742,8 +1797,8 @@ async function clearAllData(){
   if(!confirm('This will DELETE ALL students and scores from Supabase. Are you absolutely sure?')) return;
   if(!confirm('FINAL WARNING — this cannot be undone.')) return;
   try {
-    await _sb.from('scores').delete().neq('id',0);
-    await _sb.from('students').delete().neq('id',0);
+    await fetch(`${SUPABASE_URL}/rest/v1/scores?id=neq.0`,{method:'DELETE',headers:sbHeaders()});
+    await fetch(`${SUPABASE_URL}/rest/v1/students?id=neq.0`,{method:'DELETE',headers:sbHeaders()});
     CACHE.students = []; CACHE.scores = {};
     renderDashboard(); renderStudentsTable();
     showAlert('All students and scores deleted.','info');
@@ -1756,27 +1811,20 @@ async function clearAllData(){
 
 function onClassChange(){}
 
-window.onload = function(){
-  // Auth state listener — shows login or app depending on session
-  _sb.auth.onAuthStateChange(async (event, session) => {
-    if(session){
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app-shell').style.display   = 'flex';
-      const email = session.user?.email || '';
-      const el = document.getElementById('sidebar-user-email');
-      if(el) el.textContent = email;
-      await loadAll();
-      populateScoreStudentDropdown();
-      refreshClassDropdowns();
-      renderDashboard();
-      renderImportLog();
-      // Pre-render classes page so it's ready when navigated to
-      renderClassesPage();
-    } else {
-      document.getElementById('login-screen').style.display = 'flex';
-      document.getElementById('app-shell').style.display   = 'none';
-    }
-  });
+window.onload = async function(){
+  // Check for existing session token in localStorage
+  if(SB_TOKEN){
+    showApp();
+    await loadAll();
+    populateScoreStudentDropdown();
+    refreshClassDropdowns();
+    renderDashboard();
+    renderImportLog();
+    renderClassesPage();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-shell').style.display = 'none';
+  }
   populateScoreStudentDropdown();
   document.getElementById('sc-student').addEventListener('change', loadScoreFields);
   document.getElementById('sc-term').addEventListener('change', loadScoreFields);
@@ -1851,17 +1899,16 @@ async function saveClass(){
   const payload = {name, type, teacher, subjects};
   try {
     if(editId){
-      const { data, error } = await _sb.from('classes').update(payload).eq('id',editId).select().single();
-      if(error) throw error;
+      await sbUpdate('classes', editId, payload);
       const idx = CACHE.classes.findIndex(c=>c.id===editId);
-      if(idx>=0) CACHE.classes[idx] = {...data, subjects: data.subjects||[]};
+      if(idx>=0) CACHE.classes[idx] = {...CACHE.classes[idx], ...payload};
       showAlert(`${name} updated.`);
     } else {
       if(CACHE.classes.find(c=>c.name===name)){
         showAlert(`Class ${name} already exists.`,'warning'); return;
       }
-      const { data, error } = await _sb.from('classes').insert({id:name,...payload}).select().single();
-      if(error) throw error;
+      const rows = await sbInsert('classes', {id:name,...payload});
+      const data = Array.isArray(rows)?rows[0]:rows;
       CACHE.classes.push({...data, subjects: data.subjects||[]});
       showAlert(`${name} added to registry.`);
     }
@@ -1881,8 +1928,7 @@ async function deleteClass(id){
     if(!confirm(`Delete ${cls.name} from registry?`)) return;
   }
   try {
-    const { error } = await _sb.from('classes').delete().eq('id',id);
-    if(error) throw error;
+    await sbDelete('classes', id);
     CACHE.classes = CACHE.classes.filter(c=>c.id!==id);
     renderClassesPage();
     showAlert(`${cls.name} removed from registry.`,'info');
@@ -2219,10 +2265,8 @@ async function impConfirm(){
           e.cls===cls.cls && e.lname===s.lname && e.fname===s.fname);
 
         if(!existing){
-          const { data, error } = await _sb.from('students')
-            .insert({fname:s.fname,lname:s.lname,cls:cls.cls,paycode:'',teacher:clsTeacher,year,notes:''})
-            .select().single();
-          if(error) throw error;
+          const rows = await sbInsert('students', {fname:s.fname,lname:s.lname,cls:cls.cls,paycode:'',teacher:clsTeacher,year,notes:''});
+          const data = Array.isArray(rows)?rows[0]:rows;
           CACHE.students.push(data);
           existing = data;
           newStudents++;
@@ -2233,9 +2277,7 @@ async function impConfirm(){
           student_id:existing.id, term:termStore, year, subject, score:parseFloat(score)
         }));
         if(scoreRows.length){
-          const { error } = await _sb.from('scores')
-            .upsert(scoreRows, {onConflict:'student_id,term,year,subject'});
-          if(error) throw error;
+          await sbUpsert('scores', scoreRows, 'student_id,term,year,subject');
           // update cache
           if(!CACHE.scores[existing.id]) CACHE.scores[existing.id]={};
           const k = termStore+'|'+year;
@@ -2247,7 +2289,7 @@ async function impConfirm(){
 
       // Log the import
       const nc = cls.students.filter(s=>!CACHE.students.find(e=>e.cls===cls.cls&&e.lname===s.lname&&e.fname===s.fname&&e.id!==undefined)).length;
-      await _sb.from('import_log').insert({
+      await sbInsert('import_log', {
         cls:cls.cls, term:termStore,
         term_label:{midterm:'Midterm',bot:'BOT',end:'End of Term',end1:'End of Term 1',end2:'End of Term 2',end3:'End of Term 3'}[term]||term,
         year, students:cls.students.length, new_count:newStudents, update_count:updatedScores
@@ -2255,8 +2297,7 @@ async function impConfirm(){
     }
 
     // Refresh import log cache
-    const { data: newLog } = await _sb.from('import_log')
-      .select('*').order('created_at',{ascending:false}).limit(100);
+    const newLog = await sbGet('import_log','order=created_at.desc&limit=100');
     CACHE.importLog = (newLog||[]).map(r=>({...r,
       dateStr:new Date(r.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
       timeStr:new Date(r.created_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
@@ -2423,7 +2464,7 @@ function addImportLogEntry(entries){
 async function clearImportLog(){
   if(!confirm('Clear all import history?')) return;
   try {
-    await _sb.from('import_log').delete().neq('id',0);
+    await fetch(`${SUPABASE_URL}/rest/v1/import_log?id=neq.0`,{method:'DELETE',headers:sbHeaders()});
     CACHE.importLog = [];
     renderImportLog();
     showAlert('Import history cleared.','info');
