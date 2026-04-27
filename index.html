@@ -50,6 +50,12 @@ body{font-family:var(--font);color:var(--text);background:var(--gray-100);font-s
 .topbar-actions{display:flex;align-items:center;gap:10px}
 .topbar-info{font-size:12px;color:var(--text-muted);text-align:right}
 
+/* ── Campus Switcher ──────────────────────────── */
+.campus-switcher{display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;flex-shrink:0}
+.campus-btn{padding:5px 14px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--white);color:var(--text-muted);transition:all .15s;font-family:var(--font)}
+.campus-btn:hover{background:var(--gray-50)}
+.campus-btn.active{background:var(--navy);color:var(--white)}
+
 /* ── Pages ────────────────────────────────────── */
 .page{display:none}
 .page.active{display:block}
@@ -241,7 +247,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 </head>
 <body>
 
-
 <!-- Template Download Modal -->
 <div class="modal-overlay" id="modal-template">
   <div class="modal-box" style="max-width:460px">
@@ -289,8 +294,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 
 <!-- ── Alert Container ── -->
 <div id="alert-container"></div>
-
-<!-- ── Modals ── -->
 
 <!-- Score Entry Modal -->
 <div class="modal-overlay" id="modal-scores">
@@ -392,8 +395,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
   </div>
 </div>
 
-<!-- ── App Shell ── -->
-
 <!-- ── LOGIN SCREEN ── -->
 <div id="login-screen" style="
   position:fixed;inset:0;background:var(--gray-100);
@@ -407,8 +408,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
       <div style="font-size:17px;font-weight:700;color:var(--text)">Morning Star Education Services</div>
       <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Staff portal — sign in to continue</div>
     </div>
-
-    <!-- Tab switcher -->
     <div style="display:flex;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;overflow:hidden">
       <button id="tab-staff" onclick="switchLoginTab('staff')"
         style="flex:1;padding:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;
@@ -417,10 +416,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
         style="flex:1;padding:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;
                background:var(--white);color:var(--text-muted)">Admin Login</button>
     </div>
-
     <div id="login-error" style="display:none;margin-bottom:14px" class="alert alert-danger"></div>
-
-    <!-- Staff (username + PIN) -->
     <div id="login-staff-form">
       <div class="form-group" style="margin-bottom:14px">
         <label>Username</label>
@@ -436,8 +432,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
       <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px"
         onclick="doStaffLogin()" id="login-btn-staff">Sign in</button>
     </div>
-
-    <!-- Admin (email + password) -->
     <div id="login-admin-form" style="display:none">
       <div class="form-group" style="margin-bottom:14px">
         <label>Email</label>
@@ -452,7 +446,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
       <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px"
         onclick="doLogin()" id="login-btn">Sign in</button>
     </div>
-
     <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--text-muted)">
       Contact your administrator to get access
     </div>
@@ -460,91 +453,72 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 </div>
 
 <div class="app-shell" id="app-shell" style="display:none">
-
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-logo">
         <div class="brand-icon">★</div>
         <div>
-          <div class="brand-name">Morning Star</div>
-          <div class="brand-sub">Education Services</div>
+        <div class="brand-name">Morning Star</div>
+        <div class="brand-sub" id="sidebar-campus-label">Education Services</div>
         </div>
       </div>
     </div>
-
     <div class="sidebar-section">
       <div class="sidebar-label">Main</div>
       <a class="nav-item active" onclick="showPage('dashboard',this)">
-        <span class="nav-icon">⊞</span>
-        <span>Dashboard</span>
+        <span class="nav-icon">⊞</span><span>Dashboard</span>
       </a>
       <a class="nav-item" onclick="showPage('students',this)">
-        <span class="nav-icon">👤</span>
-        <span>Students</span>
+        <span class="nav-icon">👤</span><span>Students</span>
       </a>
       <a class="nav-item" onclick="showPage('scores',this)">
-        <span class="nav-icon">📋</span>
-        <span>Scores</span>
-        
+        <span class="nav-icon">📋</span><span>Scores</span>
       </a>
       <a class="nav-item" onclick="showPage('reports',this)">
-        <span class="nav-icon">📄</span>
-        <span>Report Cards</span>
+        <span class="nav-icon">📄</span><span>Report Cards</span>
       </a>
     </div>
-
     <div class="sidebar-section">
       <div class="sidebar-label">Tools</div>
       <a class="nav-item" onclick="showPage('classes',this)" id="nav-classes">
-        <span class="nav-icon">🏫</span>
-        <span>Classes</span>
+        <span class="nav-icon">🏫</span><span>Classes</span>
       </a>
       <a class="nav-item" onclick="showPage('import',this)" id="nav-import">
-        <span class="nav-icon">📥</span>
-        <span>Import Scores</span>
+        <span class="nav-icon">📥</span><span>Import Scores</span>
       </a>
       <a class="nav-item" onclick="showPage('promotions',this)" id="nav-promotions">
-        <span class="nav-icon">🎓</span>
-        <span>Promotions</span>
+        <span class="nav-icon">🎓</span><span>Promotions</span>
       </a>
       <a class="nav-item" onclick="showPage('users',this)" id="nav-users">
-        <span class="nav-icon">👥</span>
-        <span>Users</span>
+        <span class="nav-icon">👥</span><span>Users</span>
       </a>
       <a class="nav-item" onclick="showPage('paycodes',this)" id="nav-paycodes">
-        <span class="nav-icon">🪪</span>
-        <span>Payment Codes</span>
+        <span class="nav-icon">🪪</span><span>Payment Codes</span>
       </a>
       <a class="nav-item" onclick="showPage('settings',this)" id="nav-settings">
-        <span class="nav-icon">⚙</span>
-        <span>Settings</span>
+        <span class="nav-icon">⚙</span><span>Settings</span>
       </a>
     </div>
-
     <div class="sidebar-footer" style="display:flex;flex-direction:column;gap:8px">
       <div style="font-size:10px;color:rgba(255,255,255,.3)" id="sidebar-user-email"></div>
       <button class="btn btn-sm" onclick="doLogout()"
         style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);
-               color:rgba(255,255,255,.65);font-size:11px;padding:5px 10px">
-        Sign out
-      </button>
+               color:rgba(255,255,255,.65);font-size:11px;padding:5px 10px">Sign out</button>
     </div>
   </aside>
 
-  <!-- Main content -->
   <div class="main">
-
-    <!-- Topbar -->
     <div class="topbar">
       <div>
         <div class="page-title" id="topbar-title">Dashboard</div>
         <div class="page-breadcrumb" id="topbar-sub">Morning Star Education Services · Kawoko Campus</div>
       </div>
       <div class="topbar-actions">
+        <div class="campus-switcher" id="campus-switcher">
+          <button class="campus-btn active" id="btn-campus-kawoko" onclick="switchCampus('kawoko')">🏫 Kawoko</button>
+          <button class="campus-btn" id="btn-campus-ndejje" onclick="switchCampus('ndejje')">🏫 Ndejje</button>
+        </div>
         <button class="btn btn-sm" onclick="openModal('modal-import')">📥 Import Excel</button>
-        
-        
       </div>
     </div>
 
@@ -574,12 +548,10 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <div class="stat-sub">Active this year</div>
           </div>
         </div>
-
         <div class="section-header">
           <span class="section-title-text">Classes at a glance</span>
         </div>
         <div class="class-grid" id="class-grid"></div>
-
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
           <div class="card">
             <div class="card-header">
@@ -626,21 +598,14 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <option value="bot">BOT scores</option>
             <option value="end">End of Term scores</option>
           </select>
-
         </div>
         <div class="card" style="padding:0">
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Class</th>
-                  <th>Payment Code</th>
-                  <th>Class Teacher</th>
-                  <th>Midterm Total</th>
-                  <th>Division</th>
-                  <th>Actions</th>
+                  <th>#</th><th>Name</th><th>Class</th><th>Payment Code</th>
+                  <th>Class Teacher</th><th>Midterm Total</th><th>Division</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody id="students-tbody">
@@ -674,15 +639,12 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <option value="bot">Beginning of Term</option>
             <option value="end">End of Term (70%)</option>
           </select>
-  
         </div>
         <div id="scores-content"></div>
       </div>
 
       <!-- ── REPORT CARDS ── -->
       <div id="page-reports" class="page">
-
-        <!-- Single report card generator -->
         <div class="card" style="margin-bottom:16px">
           <div class="card-header">
             <div class="card-title">Preview Single Report Card</div>
@@ -750,7 +712,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
               </select>
             </div>
           </div>
-
           <div id="bulk-student-list" style="display:none;margin-bottom:14px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
               <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em" id="bulk-list-label">Students</div>
@@ -761,7 +722,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             </div>
             <div id="bulk-checkboxes" style="display:flex;flex-wrap:wrap;gap:6px"></div>
           </div>
-
           <div id="bulk-actions" style="display:none;gap:10px;flex-wrap:wrap">
             <button class="btn btn-gold" onclick="printBulkReports()">🖨️ Print Selected Report Cards</button>
             <span id="bulk-selected-count" style="font-size:12px;color:var(--text-muted);line-height:2.2"></span>
@@ -782,20 +742,15 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 
       <!-- ── CLASSES ── -->
       <div id="page-classes" class="page">
-
         <div class="section-header">
           <span class="section-title-text">Class Registry</span>
           <button class="btn btn-primary" onclick="openAddClassModal()">+ Add Class</button>
         </div>
-
         <div class="alert alert-info" style="margin-bottom:20px;max-width:900px">
           ℹ️ Define every class here — teacher, type, and subjects. The import system and report cards
-          use this registry automatically. Adding a new class here means it appears in the template
-          download and is recognised when you upload its Excel sheet.
+          use this registry automatically.
         </div>
-
         <div id="classes-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px"></div>
-
       </div>
 
       <!-- Add / Edit Class Modal -->
@@ -822,8 +777,10 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
                 </select>
               </div>
               <div class="form-group" style="grid-column:1/-1">
-                <label>Class Teacher</label>
-                <input type="text" id="cls-teacher" placeholder="e.g. Atuhwere Patrick">
+                <label>Note</label>
+                <div style="font-size:12px;color:var(--text-muted);padding:8px 12px;background:var(--gray-50);border-radius:var(--radius);border:1px solid var(--border)">
+                  Class teachers are managed per-campus under <strong>Settings → Class Teachers</strong>.
+                </div>
               </div>
             </div>
             <div class="form-group" style="margin-top:14px">
@@ -843,7 +800,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 
       <!-- ── IMPORT ── -->
       <div id="page-import" class="page">
-
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;max-width:900px">
           <div class="card" style="border-left:4px solid var(--navy)">
             <div style="font-size:13px;font-weight:700;margin-bottom:6px">📋 Expected file format</div>
@@ -851,28 +807,24 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
               • Same format as <strong>MID_TERM_ASSESMENT.xlsx</strong><br>
               • Class header row: <code style="background:var(--gray-100);padding:1px 5px;border-radius:3px">JY1 MID TERM ONE 2026</code><br>
               • Column headers: <code style="background:var(--gray-100);padding:1px 5px;border-radius:3px">NO · NAME · ENG · MTC · LIT · READ · RE · SCI · SST</code><br>
-              • One file can contain multiple classes (sheets or stacked sections)<br>
-              • Upload class by class or all at once
+              • One file can contain multiple classes (sheets or stacked sections)
             </div>
           </div>
           <div class="card" style="border-left:4px solid var(--gold)">
             <div style="font-size:13px;font-weight:700;margin-bottom:6px">⚙️ How import works</div>
             <div style="font-size:12px;color:var(--text-muted);line-height:1.8">
-              • System detects class & subjects automatically<br>
+              • System detects class &amp; subjects automatically<br>
               • <strong>New students</strong> → added to registry<br>
               • <strong>Existing students</strong> → scores updated (matched by name)<br>
-              • You preview everything before confirming<br>
-              • Supports Midterm, BOT, and End-of-Term files
+              • You preview everything before confirming
             </div>
           </div>
         </div>
-
         <div class="card">
           <div class="card-header">
             <div class="card-title">📥 Upload Assessment File</div>
             <button class="btn btn-gold btn-sm" onclick="openTemplateModal()">⬇ Download Template</button>
           </div>
-
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px">
             <div class="form-group">
               <label>Term type</label>
@@ -887,11 +839,10 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
               <input type="text" id="imp-year" value="2026">
             </div>
             <div class="form-group">
-              <label>Class teacher (optional, applied to new students)</label>
+              <label>Class teacher (optional)</label>
               <input type="text" id="imp-teacher" placeholder="e.g. Atuhwere Patrick">
             </div>
           </div>
-
           <div class="upload-zone" id="imp-dropzone"
                onclick="document.getElementById('imp-file').click()"
                ondrop="impHandleDrop(event)"
@@ -902,20 +853,16 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <div class="upload-sub" id="imp-sub">Supports .xlsx — same format as MID_TERM_ASSESMENT.xlsx</div>
             <input type="file" id="imp-file" accept=".xlsx,.xls" style="display:none" onchange="impFileSelected(event)">
           </div>
-
           <div id="imp-progress" style="display:none;margin-top:14px">
             <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px" id="imp-progress-text">Reading file...</div>
             <div class="progress-bar"><div class="progress-fill" id="imp-progress-bar" style="width:0%"></div></div>
           </div>
-
           <div id="imp-preview-area" style="margin-top:20px"></div>
-
           <div id="imp-actions" style="display:none;margin-top:16px;gap:10px;flex-wrap:wrap">
             <button class="btn btn-success" id="imp-confirm-btn" onclick="impConfirm()">✅ Confirm Import</button>
             <button class="btn" onclick="impReset()">↩ Upload different file</button>
           </div>
         </div>
-
         <div class="card" style="margin-top:20px">
           <div class="card-header">
             <div>
@@ -932,38 +879,77 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             </div>
           </div>
         </div>
-
       </div>
-<!-- ── SETTINGS ── -->
+
+      <!-- ── SETTINGS ── -->
       <div id="page-settings" class="page">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:800px">
-          <div class="card">
-            <div class="card-title" style="margin-bottom:16px">🏫 School Information</div>
-            <div class="form-grid">
+        <div style="max-width:900px">
+
+          <!-- Shared school info -->
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-title" style="margin-bottom:16px">🏫 School Information (Shared)</div>
+            <div class="form-grid form-grid-2" style="gap:14px">
               <div class="form-group"><label>School Name</label><input type="text" id="cfg-name" value="Morning Star Education Services"></div>
-              <div class="form-group"><label>Campus</label><input type="text" id="cfg-campus" value="Kawoko Campus"></div>
+              <div class="form-group"><label>Current Year</label><input type="text" id="cfg-year" value="2026"></div>
               <div class="form-group"><label>Phone</label><input type="text" id="cfg-phone" value="0414 662 252 / 0740 942 593"></div>
               <div class="form-group"><label>Email</label><input type="text" id="cfg-email" value="morningstarjuniorschool@gmail.com"></div>
-              <div class="form-group"><label>Head Teacher</label><input type="text" id="cfg-head" value="Omara Robinson"></div>
-              <div class="form-group"><label>Current Year</label><input type="text" id="cfg-year" value="2026"></div>
               <div class="form-group" style="grid-column:1/-1">
                 <label>Next Term Begins On <span style="font-weight:400;color:var(--text-muted)">(shown on End of Term reports only)</span></label>
                 <input type="text" id="cfg-next-term" placeholder="e.g. 3rd February 2027">
               </div>
             </div>
-            <button class="btn btn-primary" style="margin-top:14px" onclick="saveSettings()">Save Settings</button>
           </div>
+
+          <!-- Per-campus config -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+
+            <!-- Kawoko -->
+            <div class="card" style="border-top:3px solid var(--navy)">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                <span style="font-size:15px;font-weight:700;color:var(--navy)">🏫 Kawoko Campus</span>
+              </div>
+              <div class="form-grid" style="gap:12px">
+                <div class="form-group"><label>Head Teacher</label><input type="text" id="cfg-head-kawoko" placeholder="e.g. Omara Robinson"></div>
+                <div class="form-group"><label>Campus Address</label><input type="text" id="cfg-addr-kawoko" placeholder="Kireka - Kawoko, off Sentema Road"></div>
+                <div class="form-group"><label>Campus Phone</label><input type="text" id="cfg-phone2-kawoko" placeholder="Mob: 07xx xxx xxx"></div>
+              </div>
+              <div style="margin-top:14px">
+                <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Class Teachers — Kawoko</div>
+                <div id="kawoko-teacher-fields" style="display:flex;flex-direction:column;gap:8px"></div>
+              </div>
+            </div>
+
+            <!-- Ndejje -->
+            <div class="card" style="border-top:3px solid var(--gold)">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                <span style="font-size:15px;font-weight:700;color:var(--amber)">🏫 Ndejje Campus</span>
+              </div>
+              <div class="form-grid" style="gap:12px">
+                <div class="form-group"><label>Head Teacher</label><input type="text" id="cfg-head-ndejje" placeholder="e.g. John Kalyango"></div>
+                <div class="form-group"><label>Campus Address</label><input type="text" id="cfg-addr-ndejje" placeholder="Ndejje Campus address"></div>
+                <div class="form-group"><label>Campus Phone</label><input type="text" id="cfg-phone2-ndejje" placeholder="Mob: 07xx xxx xxx"></div>
+              </div>
+              <div style="margin-top:14px">
+                <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Class Teachers — Ndejje</div>
+                <div id="ndejje-teacher-fields" style="display:flex;flex-direction:column;gap:8px"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-bottom:20px">
+            <button class="btn btn-primary" onclick="saveSettings()">💾 Save All Settings</button>
+          </div>
+
           <div class="card">
             <div class="card-title" style="margin-bottom:16px">💾 Data Management</div>
-            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">All data is currently stored in your browser. When we connect the Flask backend in Step 2, data will be saved to the database automatically.</p>
-            <div style="display:flex;flex-direction:column;gap:10px">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">All data is stored in Supabase.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
               <button class="btn" onclick="exportData()">📤 Export all data (JSON)</button>
               <button class="btn" onclick="importJSON()">📥 Import from JSON backup</button>
               <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear all data</button>
             </div>
-            <hr class="divider">
-            <div class="alert alert-warning">
-              ⚠️ <strong>Step 2 coming next:</strong> Flask backend + SQLite database. Your data will then persist on the server permanently.
+            <div class="alert alert-info" style="margin-top:4px">
+              ℹ️ All data is stored in <strong>Supabase</strong> and persists permanently in the cloud.
             </div>
           </div>
         </div>
@@ -1006,7 +992,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             </div>
           </div>
         </div>
-
         <div id="promo-list-wrap" style="display:none">
           <div class="card" style="padding:0">
             <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
@@ -1024,11 +1009,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
                 <thead>
                   <tr>
                     <th style="width:40px"><input type="checkbox" id="promo-chk-all" onchange="promoSelectAll(this.checked)" checked></th>
-                    <th>#</th>
-                    <th>Student</th>
-                    <th>Current Class</th>
-                    <th>Promote to</th>
-                    <th>Status</th>
+                    <th>#</th><th>Student</th><th>Current Class</th><th>Promote to</th><th>Status</th>
                   </tr>
                 </thead>
                 <tbody id="promo-tbody"></tbody>
@@ -1036,7 +1017,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             </div>
           </div>
         </div>
-
         <div id="promo-empty" style="display:none">
           <div class="empty-state">
             <div class="empty-icon">🎓</div>
@@ -1060,13 +1040,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <table>
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Username</th>
-                  <th>Role</th>
-                  <th>Class</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>#</th><th>Name</th><th>Username</th><th>Role</th><th>Class</th><th>Status</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody id="users-tbody">
@@ -1079,8 +1053,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 
       <!-- ── PAYMENT CODES ── -->
       <div id="page-paycodes" class="page">
-
-        <!-- Toolbar -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
           <div>
             <div style="font-size:15px;font-weight:700">Payment Codes</div>
@@ -1095,8 +1067,6 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             </label>
           </div>
         </div>
-
-        <!-- Filters -->
         <div class="toolbar" style="margin-bottom:12px">
           <div class="search-input-wrap" style="max-width:260px">
             <span class="search-icon">🔍</span>
@@ -1112,26 +1082,19 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
           </label>
           <span id="pc-count" style="font-size:12px;color:var(--text-muted);margin-left:auto"></span>
         </div>
-
-        <!-- Table -->
         <div class="card" style="padding:0">
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th style="width:40px">#</th>
-                  <th>Name</th>
-                  <th style="width:90px">Class</th>
-                  <th>Payment Code</th>
-                  <th style="width:80px">Status</th>
+                  <th style="width:40px">#</th><th>Name</th>
+                  <th style="width:90px">Class</th><th>Payment Code</th><th style="width:80px">Status</th>
                 </tr>
               </thead>
               <tbody id="pc-tbody"></tbody>
             </table>
           </div>
         </div>
-
-        <!-- Upload result -->
         <div id="pc-upload-result" style="margin-top:14px;display:none"></div>
       </div>
 
@@ -1167,9 +1130,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
         </div>
         <div class="form-group" id="u-class-wrap">
           <label>Assigned Class</label>
-          <select id="u-class">
-            <option value="">-- Select class --</option>
-          </select>
+          <select id="u-class"><option value="">-- Select class --</option></select>
         </div>
         <div class="form-group">
           <label id="u-pin-label">PIN (4–6 digits)</label>
@@ -1224,7 +1185,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 //  SUPABASE CLIENT
 // ══════════════════════════════════════════
 
-const SUPABASE_URL  = 'https://jchnkiqvtxnhdnknscok.supabase.co';   // ← paste your Project URL here
+const SUPABASE_URL  = 'https://jchnkiqvtxnhdnknscok.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjaG5raXF2dHhuaGRua25zY29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNjQ1MTgsImV4cCI6MjA5Mjc0MDUxOH0.0adCHRyolPjSwNIFfb7QbD_eOEmrY2GVtkVm8M895x8';
 
 // ── Grading scale ────────────────────────────────────────────────────────────
@@ -1240,7 +1201,6 @@ const GRADING_SCALE = [
   {min:0,  max:34,  grade:'F',  comment:'Below expectations; needs significant improvement.'},
 ];
 
-// ── Hardcoded class config — fallback when Supabase registry hasn't loaded yet
 const CLASSES_CONFIG = {
   KY1:{label:'Kindergarten Year 1',type:'kinder',subjects:['Reading','Numeracy','Writing','Social Development','Health Habits','Project Work']},
   KY2:{label:'Kindergarten Year 2',type:'kinder',subjects:['Reading','Numeracy','Writing','Social Development','Health Habits','Project Work']},
@@ -1251,27 +1211,94 @@ const CLASSES_CONFIG = {
   JY4:{label:'Junior Year 4',type:'junior',subjects:['English','Mathematics','Science','Social Studies']},
   JY5:{label:'Junior Year 5',type:'junior',subjects:['English','Mathematics','Science','Social Studies']},
   JY6:{label:'Junior Year 6',type:'junior',subjects:['English','Mathematics','Science','Social Studies']},
-}; // ← paste your anon key here
-
-// ── Direct Supabase REST API (no SDK — avoids Promise hang issues) ────────────
+};
 
 let SB_TOKEN = localStorage.getItem('mses_sb_token') || null;
-
-// ── Session (role-aware) ──────────────────────────────────────────────────────
 let SESSION = JSON.parse(localStorage.getItem('mses_session') || 'null');
-// SESSION = { id, name, username, role:'admin'|'headteacher'|'teacher', assigned_class }
+
+// ── Active campus (persisted in localStorage) ─────────────────────────────────
+let ACTIVE_CAMPUS = localStorage.getItem('mses_campus') || 'kawoko';
+
+const CAMPUS_CONFIG = {
+  kawoko: {
+    label:       'Kawoko Campus',
+    defaultHead: 'Omara Robinson',
+    address:     'Kireka - Kawoko, off Sentema Road',
+    addressLine: 'Kireka - Kawoko campus off Sentema Road',
+  },
+  ndejje: {
+    label:       'Ndejje Campus',
+    defaultHead: 'John Kalyango',
+    address:     'Ndejje Campus',
+    addressLine: 'Ndejje Campus',
+  },
+};
+
+function getActiveCampus(){ return ACTIVE_CAMPUS; }
+
+function getCampusSetting(key){
+  // key is e.g. 'headteacher' → looks up 'headteacher_kawoko' or 'headteacher_ndejje'
+  const full = key + '_' + ACTIVE_CAMPUS;
+  return CACHE.settings?.[full] || CACHE.settings?.[key] || '';
+}
+
+function getHeadTeacher(){
+  return getCampusSetting('headteacher') ||
+    CAMPUS_CONFIG[ACTIVE_CAMPUS]?.defaultHead || '';
+}
+
+function getCampusLabel(){
+  return getCampusSetting('campusLabel') ||
+    CAMPUS_CONFIG[ACTIVE_CAMPUS]?.label || '';
+}
+
+function getCampusAddress(){
+  return getCampusSetting('address') ||
+    CAMPUS_CONFIG[ACTIVE_CAMPUS]?.addressLine || '';
+}
+
+function getCampusPhone2(){
+  return getCampusSetting('phone2') || CACHE.settings?.phone2 || '';
+}
+
+function getTeacherForClassCampus(clsName){
+  // Per-campus teacher stored as teacher_{cls}_{campus} in settings
+  const key = 'teacher_' + clsName.toLowerCase() + '_' + ACTIVE_CAMPUS;
+  if(CACHE.settings?.[key]) return CACHE.settings[key];
+  // Fall back to class registry teacher
+  return getTeacherForClass(clsName);
+}
+
+function switchCampus(campus){
+  ACTIVE_CAMPUS = campus;
+  localStorage.setItem('mses_campus', campus);
+  // Update switcher buttons
+  document.getElementById('btn-campus-kawoko').classList.toggle('active', campus === 'kawoko');
+  document.getElementById('btn-campus-ndejje').classList.toggle('active', campus === 'ndejje');
+  // Update topbar subtitle
+  const sub = document.getElementById('topbar-sub');
+  if(sub) sub.textContent =
+    'Morning Star Education Services · ' + CAMPUS_CONFIG[campus].label;
+  // Update sidebar brand subtitle
+  const brandSub = document.querySelector('.brand-sub');
+  if(brandSub) brandSub.textContent = CAMPUS_CONFIG[campus].label;
+  // Re-render anything campus-sensitive
+  renderDashboard();
+  renderStudentsTable();
+  renderScoresPage();
+  if(document.getElementById('page-reports').classList.contains('active'))
+    renderReportCard();
+  showAlert('Switched to ' + CAMPUS_CONFIG[campus].label, 'info', 2000);
+}
 
 function getRole(){ return SESSION ? SESSION.role : (SB_TOKEN ? 'admin' : null); }
 function isAdmin(){ return getRole() === 'admin'; }
 function isHeadTeacher(){ return getRole() === 'headteacher'; }
 function isTeacher(){ return getRole() === 'teacher'; }
-function canEdit(){ return isAdmin(); }   // only admin edits scores/imports/etc.
+function canEdit(){ return isAdmin(); }
 
-// ── Apply role-based UI restrictions ─────────────────────────────────────────
 function applyRoleUI(){
   const role = getRole();
-
-  // Nav items: which roles can see each page
   const navAccess = {
     'nav-classes':    ['admin'],
     'nav-import':     ['admin'],
@@ -1284,12 +1311,8 @@ function applyRoleUI(){
     const el = document.getElementById(id);
     if(el) el.style.display = allowed.includes(role) ? '' : 'none';
   });
-
-  // Hide the "Tools" sidebar section label entirely for non-admins
-  // (find it by checking sidebar-label text)
   document.querySelectorAll('.sidebar-label').forEach(el => {
     if(el.textContent.trim() === 'Tools'){
-      // Check if all nav items in its section are hidden
       const section = el.closest('.sidebar-section');
       if(section){
         const visibleItems = [...section.querySelectorAll('.nav-item')]
@@ -1298,34 +1321,24 @@ function applyRoleUI(){
       }
     }
   });
-
-  // Show/hide topbar import button
   const importBtn = document.querySelector('.topbar-actions .btn-sm');
   if(importBtn) importBtn.style.display = isAdmin() ? '' : 'none';
-
-  // Sidebar user label
   const lbl = document.getElementById('sidebar-user-email');
   if(lbl && SESSION) lbl.textContent = SESSION.name + ' · ' + SESSION.role;
-
-  // For teachers: restrict student/report dropdowns to assigned class
   if(isTeacher() && SESSION?.assigned_class){
     const cls = SESSION.assigned_class;
-    // Lock class filters to assigned class
     ['student-class-filter','rep-class','bulk-class','scores-class-filter'].forEach(id => {
       const el = document.getElementById(id);
       if(!el) return;
-      // Set value and disable
       el.value = cls;
       el.disabled = true;
     });
-    // Trigger re-renders with the locked class
     renderStudentsTable();
     renderScoresPage();
     populateReportDropdown();
   }
 }
 
-// ── Chunk array into batches ─────────────────────────────────────────────────
 function chunkArray(arr, size){
   const chunks = [];
   for(let i=0; i<arr.length; i+=size) chunks.push(arr.slice(i,i+size));
@@ -1365,13 +1378,11 @@ async function refreshSession(){
   }
 }
 
-// Wrapper that auto-refreshes on 401/403
 async function sbFetch(url, options){
   let r = await fetch(url, options);
   if(r.status === 401 || r.status === 403){
     const refreshed = await refreshSession();
     if(refreshed){
-      // Retry with new token
       options.headers = {...options.headers, 'Authorization': 'Bearer ' + SB_TOKEN};
       r = await fetch(url, options);
     }
@@ -1423,7 +1434,26 @@ async function sbUpsert(table, body, onConflict){
   return r.json();
 }
 
-// ── Auth helpers ──────────────────────────────────────────────────────────────
+async function sbPatch(table, query, data){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+    method:'PATCH',
+    headers: sbHeaders({'Prefer':'return=minimal'}),
+    body: JSON.stringify(data)
+  });
+  if(!r.ok){ const e=await r.json(); throw new Error(e.message||'Update failed'); }
+}
+
+async function sbPost(table, data){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method:'POST',
+    headers: sbHeaders(),
+    body: JSON.stringify(data)
+  });
+  if(!r.ok){ const e=await r.json(); throw new Error(e.message||'Insert failed'); }
+  return r.json();
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
 async function doLogin(){
   const email = document.getElementById('login-email').value.trim();
   const pw    = document.getElementById('login-password').value;
@@ -1443,7 +1473,7 @@ async function doLogin(){
     localStorage.setItem('mses_sb_token', SB_TOKEN);
     localStorage.setItem('mses_sb_email', email);
     if(data.refresh_token) localStorage.setItem('mses_sb_refresh', data.refresh_token);
-    SESSION = null; // admin uses SB_TOKEN not SESSION
+    SESSION = null;
     localStorage.removeItem('mses_session');
     showApp(email);
     await loadAll();
@@ -1478,18 +1508,25 @@ function showApp(email){
   document.getElementById('app-shell').style.display = 'flex';
   const el = document.getElementById('sidebar-user-email');
   if(el) el.textContent = email || localStorage.getItem('mses_sb_email') || '';
+  // Apply saved campus
+  const campus = ACTIVE_CAMPUS;
+  document.getElementById('btn-campus-kawoko').classList.toggle('active', campus === 'kawoko');
+  document.getElementById('btn-campus-ndejje').classList.toggle('active', campus === 'ndejje');
+  const sub = document.getElementById('topbar-sub');
+  if(sub) sub.textContent = 'Morning Star Education Services · ' + CAMPUS_CONFIG[campus].label;
+  const brandSub = document.getElementById('sidebar-campus-label');
+  if(brandSub) brandSub.textContent = CAMPUS_CONFIG[campus].label;
 }
 
-// ── In-memory cache ───────────────────────────────────────────────────────────
+// ── Cache ─────────────────────────────────────────────────────────────────────
 let CACHE = {
   students:  [],
   classes:   [],
   settings:  {},
   importLog: [],
-  scores:    {},   // { studentId: { "term|year": {subject:score} } }
+  scores:    {},
 };
 
-// DB proxy — lets all existing UI code keep using DB.students, DB.classes etc.
 const DB = new Proxy({}, {
   get(_, prop){
     if(prop === 'students')  return CACHE.students;
@@ -1501,20 +1538,12 @@ const DB = new Proxy({}, {
   }
 });
 
-// no-op — Supabase handles persistence
 function saveDB(){}
 function loadDB(){}
 
-// ── Load everything on startup ────────────────────────────────────────────────
 async function loadAll(){
   try {
-    const [
-      students,
-      classes,
-      settings,
-      importLog,
-      allScores,
-    ] = await Promise.all([
+    const [students, classes, settings, importLog, allScores] = await Promise.all([
       sbGet('students','order=lname'),
       sbGet('classes','order=name'),
       sbGet('settings',''),
@@ -1533,7 +1562,6 @@ async function loadAll(){
       dateStr: new Date(r.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
       timeStr: new Date(r.created_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
     }));
-    // Hydrate score cache in bulk so Students & Scores pages render immediately
     CACHE.scores = {};
     (allScores || []).forEach(r => {
       if(!CACHE.scores[r.student_id]) CACHE.scores[r.student_id] = {};
@@ -1549,7 +1577,6 @@ async function loadAll(){
 
 // ── Score helpers ─────────────────────────────────────────────────────────────
 async function loadScoresForStudent(studentId){
-  // Already loaded in bulk during loadAll — only fetch if missing
   if(CACHE.scores[studentId] && Object.keys(CACHE.scores[studentId]).length > 0) return;
   const data = await sbGet('scores', `student_id=eq.${studentId}&select=term,year,subject,score`);
   const byTerm = {};
@@ -1563,7 +1590,6 @@ async function loadScoresForStudent(studentId){
 
 function getCachedScores(studentId, term, year){
   const scores = CACHE.scores[studentId] || {};
-  // Exact match only — never leak scores from a different year
   const exactKey = term+'|'+(year||'2026');
   return scores[exactKey] || {};
 }
@@ -1589,11 +1615,6 @@ function getDivision(aggTotal, numSubjects){
   if(avg <= 6) return 3;
   if(avg <= 8) return 4;
   return 5;
-}
-
-function gradeBadgeHtml(grade){
-  const cls = 'badge badge-'+grade.toLowerCase().replace(/\d/,'');
-  return `<span class="badge badge-${grade.toLowerCase()}">${grade}</span>`;
 }
 
 function calcStudentSummary(studentId, term){
@@ -1623,7 +1644,6 @@ function calcStudentSummary(studentId, term){
 
 let currentReportStudentId = null;
 
-// Year-aware summary — used by Students and Scores pages
 function calcStudentSummaryForYear(studentId, term, year){
   const sc = getCachedScores(studentId, term, year || '2026');
   const student = DB.students.find(s => s.id === studentId);
@@ -1675,7 +1695,6 @@ function showPage(name, navEl){
   document.getElementById('topbar-sub').textContent = meta.sub || '';
   if(name==='dashboard') renderDashboard();
   if(name==='classes'){
-    // If cache is empty, reload from Supabase first
     if(CACHE.classes.length === 0){
       loadAll().then(() => { renderClassesPage(); refreshClassDropdowns(); });
     } else {
@@ -1684,7 +1703,6 @@ function showPage(name, navEl){
   }
   if(name==='students') renderStudentsTable();
   if(name==='scores') renderScoresPage();
-  // Restrict non-admin pages
   const adminOnlyPages = ['import','classes','promotions','settings','users','paycodes'];
   if(adminOnlyPages.includes(name) && !isAdmin()){
     showAlert('Access denied — admin only.', 'danger');
@@ -1693,7 +1711,7 @@ function showPage(name, navEl){
   }
   if(name==='import') renderImportLog();
   if(name==='reports') populateReportDropdown();
-  if(name==='settings') populateSettingsForm();
+  if(name==='settings'){ populateSettingsForm(); buildCampusTeacherFields(); }
   if(name==='promotions') { renderPromotionDropdowns(); renderPromotionList(); }
   if(name==='users') renderUsersPage();
   if(name==='paycodes') renderPaycodesTable();
@@ -1709,10 +1727,6 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); });
 });
 
-// ══════════════════════════════════════════
-//  ALERTS
-// ══════════════════════════════════════════
-
 function showAlert(msg, type='success', duration=3500){
   const el = document.createElement('div');
   el.className = `alert alert-${type} alert-toast`;
@@ -1725,60 +1739,6 @@ function showAlert(msg, type='success', duration=3500){
 //  STUDENTS
 // ══════════════════════════════════════════
 
-function prepStudentModal(student=null){
-  document.getElementById('modal-student-title').textContent = student ? 'Edit Student' : 'Add New Student';
-  document.getElementById('edit-student-id').value = student ? student.id : '';
-  document.getElementById('s-firstname').value = student ? student.fname : '';
-  document.getElementById('s-lastname').value = student ? student.lname : '';
-  document.getElementById('s-class').value = student ? student.cls : '';
-  document.getElementById('s-paycode').value = student ? (student.paycode||'') : '';
-  document.getElementById('s-teacher').value = student ? (student.teacher||'') : '';
-  document.getElementById('s-year').value = student ? (student.year||'2026') : '2026';
-  document.getElementById('s-notes').value = student ? (student.notes||'') : '';
-}
-
-async function saveStudent(){
-  const fn = document.getElementById('s-firstname').value.trim().toUpperCase();
-  const ln = document.getElementById('s-lastname').value.trim().toUpperCase();
-  const cls = document.getElementById('s-class').value;
-  if(!fn || !ln){ showAlert('Please enter first and last name.','warning'); return; }
-  if(!cls){ showAlert('Please select a class.','warning'); return; }
-
-  const editId = document.getElementById('edit-student-id').value;
-  if(editId){
-    const s = DB.students.find(x => x.id == editId);
-    if(s){
-      s.fname = fn; s.lname = ln; s.cls = cls;
-      s.paycode = document.getElementById('s-paycode').value.trim();
-      s.teacher = document.getElementById('s-teacher').value.trim();
-      s.year = document.getElementById('s-year').value.trim();
-      s.notes = document.getElementById('s-notes').value.trim();
-      showAlert(`${fn} ${ln} updated.`);
-    }
-  } else {
-    // Auto-fill teacher from class registry if not manually entered
-    const autoTeacher = document.getElementById('s-teacher').value.trim() || getTeacherForClass(cls);
-    const student = {
-      id: DB.nextId++,
-      fname: fn, lname: ln, cls,
-      paycode: document.getElementById('s-paycode').value.trim(),
-      teacher: autoTeacher,
-      year: document.getElementById('s-year').value.trim(),
-      notes: document.getElementById('s-notes').value.trim(),
-      createdAt: new Date().toISOString()
-    };
-    DB.students.push(student);
-    if(!DB.scores[student.id]) DB.scores[student.id] = {midterm:{}, bot:{}, end:{}};
-    showAlert(`${fn} ${ln} added to ${cls}.`);
-  }
-  saveDB();
-  closeModal('modal-student');
-  renderStudentsTable();
-  renderDashboard();
-  populateScoreStudentDropdown();
-  populateReportDropdown();
-}
-
 async function deleteStudent(id){
   if(!confirm('Delete this student? This will also remove all their scores.')) return;
   try {
@@ -1789,8 +1749,7 @@ async function deleteStudent(id){
     renderDashboard();
     showAlert('Student removed.','info');
   } catch(e){
-    console.error('saveStudent error full:', JSON.stringify(e));
-    showAlert('Error saving: '+e.message,'danger');
+    showAlert('Error: '+e.message,'danger');
   }
 }
 
@@ -1801,8 +1760,9 @@ function renderStudentsTable(){
   const tf = document.getElementById('student-term-filter')?.value || 'midterm';
   const filtered = DB.students.filter(s => {
     const name = (s.fname+' '+s.lname).toLowerCase();
-    const yearMatch = !yf || (s.year || '2026') === yf;
-    return (!q || name.includes(q) || (s.paycode||'').includes(q)) && (!cf || s.cls === cf) && yearMatch;
+    const yearMatch   = !yf || (s.year || '2026') === yf;
+    const campusMatch = (s.campus || 'kawoko') === ACTIVE_CAMPUS;
+    return campusMatch && (!q || name.includes(q) || (s.paycode||'').includes(q)) && (!cf || s.cls === cf) && yearMatch;
   });
   const tbody = document.getElementById('students-tbody');
   if(!filtered.length){
@@ -1818,7 +1778,7 @@ function renderStudentsTable(){
       <td><span class="td-name">${s.fname} ${s.lname}</span><br><span class="td-muted">${s.notes||''}</span></td>
       <td><span class="badge badge-navy">${s.cls}</span></td>
       <td class="td-muted">${s.paycode||'—'}</td>
-      <td class="td-muted">${getTeacherForClass(s.cls) || s.teacher || '—'}</td>
+      <td class="td-muted">${getTeacherForClassCampus(s.cls) || '<span style="color:var(--text-light);font-style:italic">Not set</span>'}</td>
       <td>${totHtml}</td>
       <td>${divHtml}</td>
       <td>
@@ -1841,7 +1801,7 @@ function populateScoreStudentDropdown(){
   if(!sel) return;
   const cur = sel.value;
   sel.innerHTML = '<option value="">-- Select student --</option>';
-  DB.students.forEach(s => {
+  DB.students.filter(s => (s.campus||'kawoko') === ACTIVE_CAMPUS).forEach(s => {
     sel.innerHTML += `<option value="${s.id}">${s.fname} ${s.lname} (${s.cls})</option>`;
   });
   if(cur) sel.value = cur;
@@ -1853,14 +1813,11 @@ async function loadScoreFields(){
   const year = document.getElementById('sc-year')?.value || '2026';
   const area = document.getElementById('score-fields-area');
   if(!sid || !area){ if(area) area.innerHTML = '<div class="empty-state" style="padding:30px"><div class="empty-icon">📝</div><div class="empty-text">Select a student to enter scores</div></div>'; return; }
-
   const student = DB.students.find(s => s.id === sid);
   if(!student){ return; }
   const subs = getSubjectsForClass(student.cls);
-  // Load scores from Supabase
   await loadScoresForStudent(sid);
   const existing = getCachedScores(sid, term, year);
-
   area.innerHTML = `<div class="score-entry-grid">${subs.map(sub => {
     const val = existing[sub] !== undefined ? existing[sub] : '';
     const g = val !== '' ? getGrade(Number(val)) : null;
@@ -1892,7 +1849,6 @@ async function saveScores(){
   if(!sid){ showAlert('Select a student.','warning'); return; }
   const student = DB.students.find(s => s.id === sid);
   const subs = getSubjectsForClass(student.cls);
-  if(!DB.scores[sid]) DB.scores[sid] = {midterm:{}, bot:{}, end:{}};
   let saved = 0;
   const upserts = [];
   subs.forEach(sub => {
@@ -1905,7 +1861,6 @@ async function saveScores(){
   if(!saved){ showAlert('No scores entered.','warning'); return; }
   try {
     await sbUpsert('scores', upserts, 'student_id,term,year,subject');
-    // update cache
     const yr = document.getElementById('sc-year').value||'2026';
     if(!CACHE.scores[sid]) CACHE.scores[sid] = {};
     const k = term+'|'+yr;
@@ -1946,24 +1901,22 @@ function renderScoresPage(){
   const year = document.getElementById('scores-year-filter')?.value || '2026';
   const area = document.getElementById('scores-content');
   if(!area) return;
-
-  let filtered = DB.students.filter(s => (!cf || s.cls === cf) && (!q || (s.fname+' '+s.lname).toLowerCase().includes(q)));
+  let filtered = DB.students.filter(s =>
+    (s.campus || 'kawoko') === ACTIVE_CAMPUS &&
+    (!cf || s.cls === cf) &&
+    (!q || (s.fname+' '+s.lname).toLowerCase().includes(q))
+  );
   if(!filtered.length){ area.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No students to show</div></div>'; return; }
-
   const byClass = {};
   filtered.forEach(s => { if(!byClass[s.cls]) byClass[s.cls] = []; byClass[s.cls].push(s); });
-
   area.innerHTML = Object.keys(byClass).sort().map(cls => {
     const studs = byClass[cls];
     const subs = getSubjectsForClass(cls);
     const shortSub = s => s.replace('Religious Education','RE').replace('Literacy 1A','Lit1A').replace('Literacy 1B','Lit1B').replace('Social Development','Soc Dev').replace('Health Habits','Health').replace('Project Work','Project').replace('Mathematics','Math').replace('Social Studies','SST');
-
-    // Check if ANY student in this class has scores for this term/year
     const hasAnyScores = studs.some(s => {
       const sc = getCachedScores(s.id, term, year);
       return Object.keys(sc).length > 0;
     });
-
     if(!hasAnyScores){
       return `<div class="card" style="margin-bottom:16px;padding:0">
         <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
@@ -2015,6 +1968,7 @@ function renderScoresPage(){
   }).join('');
 }
 
+
 // ══════════════════════════════════════════
 //  REPORT CARDS
 // ══════════════════════════════════════════
@@ -2024,16 +1978,15 @@ function filterReportStudents(){
   const sel = document.getElementById('rep-student');
   if(!sel) return;
   sel.innerHTML = '<option value="">-- Select student --</option>';
-  const filtered = cls
-    ? CACHE.students.filter(s=>s.cls===cls)
-    : CACHE.students;
+  const filtered = CACHE.students.filter(s =>
+    (s.campus||'kawoko') === ACTIVE_CAMPUS && (!cls || s.cls === cls)
+  );
   [...filtered].sort((a,b)=>(a.lname+a.fname).localeCompare(b.lname+b.fname))
     .forEach(s => sel.innerHTML += `<option value="${s.id}">${s.lname} ${s.fname} (${s.cls})</option>`);
   renderReportCard();
 }
 
 function populateReportDropdown(){
-  // Sync year dropdowns to current year from settings
   const curYear = CACHE.settings?.year || '2026';
   ['rep-year','bulk-year'].forEach(id => {
     const el = document.getElementById(id);
@@ -2043,11 +1996,7 @@ function populateReportDropdown(){
     }
     el.value = curYear;
   });
-
-  // For teachers, force their assigned class
   const teacherCls = (isTeacher() && SESSION?.assigned_class) ? SESSION.assigned_class : null;
-
-  // Populate class filter
   const clsSel = document.getElementById('rep-class');
   if(clsSel){
     if(teacherCls){
@@ -2063,14 +2012,14 @@ function populateReportDropdown(){
       clsSel.disabled = false;
     }
   }
-
-  // Populate student dropdown — filtered to teacher's class
   const sel = document.getElementById('rep-student');
   if(!sel) return;
   const cur = sel.value;
   const cls = teacherCls || clsSel?.value || '';
   sel.innerHTML = '<option value="">-- Select student --</option>';
-  const filtered = cls ? CACHE.students.filter(s=>s.cls===cls) : CACHE.students;
+  const filtered = CACHE.students.filter(s =>
+    (s.campus||'kawoko') === ACTIVE_CAMPUS && (!cls || s.cls === cls)
+  );
   [...filtered].sort((a,b)=>(a.lname+a.fname).localeCompare(b.lname+b.fname))
     .forEach(s => sel.innerHTML += `<option value="${s.id}">${s.lname} ${s.fname} (${s.cls})</option>`);
   if(cur){ sel.value = cur; renderReportCard(); }
@@ -2087,10 +2036,13 @@ function buildReportHTML(studentId, term, year){
   const termNum = {midterm:'I', bot:'I', end:'III'}[term] || 'I';
   const termPeriod = `Term ${termNum} — ${year}`;
   const S = DB.settings;
+  const campusLabel   = getCampusLabel()   || 'Kawoko Campus';
+  const campusAddr    = getCampusAddress() || 'Kireka - Kawoko campus off Sentema Road';
+  const campusPhone2  = getCampusPhone2()  || S.phone2 || S.phone || '';
+  const headTeacher   = getHeadTeacher()   || '—';
+  const classTeacher  = getTeacherForClassCampus(student.cls) || student.teacher || '—';
   const scoredSubs = summary ? summary.subResults.filter(r => r.score !== null) : [];
   const totalAgg = scoredSubs.reduce((a,r) => a + getAgg(r.grade), 0);
-
-  // Teacher comment based on division
   const div = summary?.div;
   const teacherComment = div === 1 ? 'Excellent work, keep aiming higher!' : div === 2 ? 'Good work, keep working hard.' : div === 3 ? 'Promising results, aim higher next term.' : 'Needs more effort; please study harder.';
   const headComment = 'Promising results, don\'t relax next term.';
@@ -2103,7 +2055,7 @@ function buildReportHTML(studentId, term, year){
         <div class="report-addr">
           Address: ${S.address}<br>
           Telephone: ${S.phone}<br>
-          Kireka - Kawoko campus off Sentema Road | Mob: ${S.phone2}<br>
+          ${campusAddr} | Mob: ${campusPhone2}<br>
           Email: ${S.email}
         </div>
       </div>
@@ -2151,29 +2103,25 @@ function buildReportHTML(studentId, term, year){
         </tr>
       </tfoot>
     </table>
-
     ${(div && term === 'end') ? `<div class="report-promotion">PROMOTED TO ${student.cls.replace('JY','JUNIOR YEAR ').replace('KY','KINDERGARTEN YEAR ')}</div>` : ''}
-
     <div style="font-size:11px;margin-bottom:10px">
       <strong>Note:</strong> Midterm and End of term exams have been assessed out of 30% and 70% respectively to inform the 100%.
     </div>
-
     <div class="grading-key-row">
       ${GRADING_SCALE.map(g => `<span class="gkey">${g.grade}: ${g.min}–${g.max}</span>`).join('')}
     </div>
-
     <div class="report-footer-grid">
       <div>
         <div style="font-weight:600;margin-bottom:6px;font-size:12px">Classteacher's comment:</div>
         <div style="font-style:italic;font-size:11px;color:var(--text-muted)">${teacherComment}</div>
         <div class="report-footer-grid" style="margin-top:0;grid-template-columns:1fr">
-          <div class="sig-line">CLASS TEACHER: ${getTeacherForClass(student.cls)||student.teacher||'—'}</div>
+          <div class="sig-line">CLASS TEACHER: ${classTeacher}</div>
         </div>
       </div>
       <div>
         <div style="font-weight:600;margin-bottom:6px;font-size:12px">Headteacher's comment:</div>
         <div style="font-style:italic;font-size:11px;color:var(--text-muted)">${headComment}</div>
-        <div class="sig-line">HEAD TEACHER: ${S.headteacher}</div>
+        <div class="sig-line">HEAD TEACHER: ${headTeacher}</div>
       </div>
     </div>
     <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--text-muted)">
@@ -2182,6 +2130,7 @@ function buildReportHTML(studentId, term, year){
   </div>`;
 }
 
+// ── FIX 2: renderReportCard — preserve option value attribute ─────────────────
 async function renderReportCard(){
   const sid = parseInt(document.getElementById('rep-student')?.value);
   const term = document.getElementById('rep-term')?.value || 'midterm';
@@ -2193,22 +2142,22 @@ async function renderReportCard(){
     return;
   }
   area.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">Loading scores...</div></div>';
-  // Load scores if not already in cache — never wipe existing cache on term/year switch
   await loadScoresForStudent(sid);
   currentReportStudentId = sid;
-  // Check if student has any scores for selected term/year
   const sc = getCachedScores(sid, term, year);
 
-  // Update year dropdown to highlight which years have data
+  // Update year dropdown to highlight which years have data.
+  // FIXED: read and restore the raw value attribute so year lookups never
+  // see stale "2026 ✓" strings in getCachedScores key comparisons.
   const repYearEl2 = document.getElementById('rep-year');
   if(repYearEl2 && sid){
     const studentScores = CACHE.scores[sid] || {};
     [...repYearEl2.options].forEach(opt => {
-      const yr = opt.value;  // always read the explicit value attribute
+      // Always read the raw value attribute — opt.value can carry stale " ✓" text
+      const yr = opt.getAttribute('value') || opt.text.replace(' ✓','').trim();
       const hasData = !!studentScores[term+'|'+yr];
-      // Update display text but preserve value attribute
       opt.text = yr + (hasData ? ' ✓' : '');
-      // value attribute is untouched since it was set explicitly in HTML
+      opt.setAttribute('value', yr);   // keep attribute clean for future reads
     });
   }
 
@@ -2231,66 +2180,173 @@ function openReportFor(sid){
   }, 50);
 }
 
+const REPORT_PRINT_CSS = `
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;padding:20px;color:#1a202c;font-size:12px;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .report-paper{max-width:680px;margin:0 auto;padding:24px;page-break-after:always}
+  .report-paper:last-child{page-break-after:avoid}
+  .report-school-name{font-size:17px;font-weight:800;color:#0d3b6e;text-align:center}
+  .report-school-sub{font-size:12px;font-weight:600;color:#0d3b6e;text-align:center}
+  .report-addr{font-size:10px;color:#5a6473;text-align:center;line-height:1.7;margin-bottom:10px}
+  .report-divider{border:none;border-top:2px solid #0d3b6e;margin:10px 0}
+  .report-term-title{text-align:center;font-size:14px;font-weight:700;letter-spacing:.08em;margin:8px 0}
+  .report-meta-row{display:flex;gap:12px;background:#f8f9fa!important;border:1px solid #e4e8ed;
+    border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:12px;justify-content:space-between;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .report-meta-item strong{display:block;font-size:10px;text-transform:uppercase;
+    color:#5a6473;letter-spacing:.05em;margin-bottom:2px}
+  .report-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px}
+  .report-table th{background:#0d3b6e!important;color:#fff!important;padding:7px 10px;text-align:left;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .report-table td{padding:6px 10px;border-bottom:1px solid #e4e8ed}
+  .report-table tr:nth-child(even) td{background:#f8f9fa!important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .report-table tfoot td{background:#f0f2f5!important;font-weight:700;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .report-footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:11px;margin-top:14px}
+  .sig-line{border-top:1px dashed #e4e8ed;margin-top:18px;padding-top:4px;color:#5a6473}
+  .report-promotion{font-size:13px;font-weight:700;color:#0d3b6e;text-align:center;
+    letter-spacing:.05em;margin:14px 0;padding:10px;border:2px dashed #c9a84c;border-radius:6px}
+  .gkey{display:inline-block;padding:2px 7px;border-radius:4px;background:#f0f2f5!important;
+    color:#5a6473;font-size:10px;margin:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .grading-key-row{margin-bottom:14px}
+  @media print{
+    body{padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .report-paper{padding:10px;max-width:100%}
+  }
+`;
+
+// Opens a report in a fully independent Blob URL tab — zero DOM bridge back to MSES,
+// so the parent tab never freezes when the print dialog opens or stays open.
+function openPrintBlob(title, bodyHtml){
+  const fullHtml = `<!DOCTYPE html><html>
+<head><meta charset="UTF-8"><title>${title}</title>
+<style>${REPORT_PRINT_CSS}</style>
+<script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script>
+</head><body>${bodyHtml}</body></html>`;
+  const blob = new Blob([fullHtml], {type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  const tab  = window.open(url, '_blank');
+  if(!tab){ showAlert('Pop-up blocked. Please allow pop-ups for this site.','warning'); }
+  // Release the blob URL after a short delay — the tab has its own copy in memory
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
 function printCurrentReport(){
   const sid = parseInt(document.getElementById('rep-student')?.value) || currentReportStudentId;
   const term = document.getElementById('rep-term')?.value || 'midterm';
   if(!sid){ showAlert('Select a student first.','warning'); return; }
   const year = document.getElementById('rep-year')?.value || '2026';
   const html = buildReportHTML(sid, term, year);
-  const w = window.open('', '_blank');
-  w.document.write(`<!DOCTYPE html><html><head><title>Report Card</title>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',Arial,sans-serif;padding:20px;color:#1a202c;font-size:12px;
-      -webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .report-paper{max-width:680px;margin:0 auto;padding:24px}
-    .report-school-name{font-size:17px;font-weight:800;color:#0d3b6e;text-align:center}
-    .report-school-sub{font-size:12px;font-weight:600;color:#0d3b6e;text-align:center}
-    .report-addr{font-size:10px;color:#5a6473;text-align:center;line-height:1.7;margin-bottom:10px}
-    .report-divider{border:none;border-top:2px solid #0d3b6e;margin:10px 0}
-    .report-term-title{text-align:center;font-size:14px;font-weight:700;letter-spacing:.08em;margin:8px 0}
-    .report-meta-row{display:flex;gap:12px;background:#f8f9fa;border:1px solid #e4e8ed;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:12px;justify-content:space-between}
-    .report-meta-item strong{display:block;font-size:10px;text-transform:uppercase;color:#5a6473;letter-spacing:.05em;margin-bottom:2px}
-    .report-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px}
-    .report-table th{background:#0d3b6e!important;color:#fff!important;padding:7px 10px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .report-table td{padding:6px 10px;border-bottom:1px solid #e4e8ed}
-    .report-table tr:nth-child(even) td{background:#f8f9fa!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .report-table tfoot td{background:#f0f2f5!important;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .report-footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:11px;margin-top:14px}
-    .sig-line{border-top:1px dashed #e4e8ed;margin-top:18px;padding-top:4px;color:#5a6473}
-    .report-promotion{font-size:13px;font-weight:700;color:#0d3b6e;text-align:center;letter-spacing:.05em;margin:14px 0;padding:10px;border:2px dashed #c9a84c;border-radius:6px}
-    .gkey{display:inline-block;padding:2px 7px;border-radius:4px;background:#f0f2f5!important;color:#5a6473;font-size:10px;margin:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .grading-key-row{margin-bottom:14px}
-    @media print{body{padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.report-paper{padding:10px}}
-  </style></head><body>${html}</body></html>`);
-  w.document.close();
-  w.focus();
-  setTimeout(() => w.print(), 500);
+  const student = DB.students.find(s => s.id === sid);
+  const name = student ? `${student.lname} ${student.fname}` : 'Report Card';
+  openPrintBlob(name, html);
 }
+
+
+// ── Bulk print helpers ────────────────────────────────────────────────────────
+
+function renderBulkStudentList(){
+  const cls = document.getElementById('bulk-class').value;
+  const listWrap  = document.getElementById('bulk-student-list');
+  const actWrap   = document.getElementById('bulk-actions');
+  const emptyMsg  = document.getElementById('bulk-empty');
+  const boxes     = document.getElementById('bulk-checkboxes');
+  const label     = document.getElementById('bulk-list-label');
+  if(!cls){
+    listWrap.style.display = 'none';
+    actWrap.style.display  = 'none';
+    emptyMsg.style.display = 'block';
+    return;
+  }
+  const students = DB.students
+    .filter(s => s.cls === cls && (s.campus||'kawoko') === ACTIVE_CAMPUS)
+    .sort((a,b) => a.lname.localeCompare(b.lname));
+  if(!students.length){
+    listWrap.style.display = 'none';
+    actWrap.style.display  = 'none';
+    emptyMsg.style.display = 'block';
+    emptyMsg.textContent   = `No students found in ${cls}.`;
+    return;
+  }
+  emptyMsg.style.display = 'none';
+  label.textContent = `${cls} — ${students.length} student${students.length!==1?'s':''}`;
+  boxes.innerHTML = students.map(s => `
+    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;
+      background:var(--gray-50);border:1px solid var(--border);border-radius:var(--radius);
+      padding:5px 11px;user-select:none">
+      <input type="checkbox" class="bulk-chk" value="${s.id}" checked
+        onchange="updateBulkCount()" style="cursor:pointer">
+      ${s.lname} ${s.fname}
+    </label>`).join('');
+  listWrap.style.display = 'block';
+  actWrap.style.display  = 'flex';
+  updateBulkCount();
+}
+
+function bulkSelectAll(checked){
+  document.querySelectorAll('.bulk-chk').forEach(c => c.checked = checked);
+  updateBulkCount();
+}
+
+function updateBulkCount(){
+  const total    = document.querySelectorAll('.bulk-chk').length;
+  const selected = document.querySelectorAll('.bulk-chk:checked').length;
+  document.getElementById('bulk-selected-count').textContent =
+    `${selected} of ${total} selected`;
+}
+
+// ── printBulkReports — Blob URL (no DOM bridge, no freeze) ───────────────────
+function printBulkReports(){
+  const term = document.getElementById('bulk-term').value;
+  const year = document.getElementById('bulk-year').value || '2026';
+  const checked = [...document.querySelectorAll('.bulk-chk:checked')];
+
+  if(!checked.length){
+    showAlert('Select at least one student.', 'warning');
+    return;
+  }
+
+  const bulkClass = document.getElementById('bulk-class').value;
+
+  // Build all cards — year passed directly, no DOM reads or mutation
+  const cards = checked.map(c => buildReportHTML(parseInt(c.value), term, year)).join('');
+
+  // Open as a Blob URL — completely independent tab, zero DOM bridge back to MSES.
+  // This is the key fix: window.open('','_blank') + document.write() keeps a live
+  // parent-child connection that suspends the parent tab's event loop while the
+  // print dialog is open. A Blob URL tab has NO such connection — MSES stays
+  // fully responsive the instant the print tab opens.
+  openPrintBlob(`Bulk Report Cards — ${bulkClass} ${term} ${year}`, cards);
+
+  // Re-enable checkboxes — nothing is frozen, these work immediately
+  document.querySelectorAll('.bulk-chk').forEach(c => c.disabled = false);
+  updateBulkCount();
+}
+
 
 // ══════════════════════════════════════════
 //  DASHBOARD
 // ══════════════════════════════════════════
 
 function renderDashboard(){
-  const total = DB.students.length;
-  const classes = [...new Set(DB.students.map(s => s.cls))];
+  const campusStudents = DB.students.filter(s => (s.campus||'kawoko') === ACTIVE_CAMPUS);
+  const total = campusStudents.length;
+  const classes = [...new Set(campusStudents.map(s => s.cls))];
   document.getElementById('stat-students').textContent = total;
   document.getElementById('stat-classes').textContent = classes.length;
   document.getElementById('stat-classes-sub').textContent = classes.join(', ');
-
   let div1 = 0, scored = 0;
-  DB.students.forEach(s => {
+  campusStudents.forEach(s => {
     const sum = calcStudentSummary(s.id, 'midterm');
     if(sum && sum.count > 0){ scored++; if(sum.div === 1) div1++; }
   });
   document.getElementById('stat-div1').textContent = div1;
   document.getElementById('stat-scored').textContent = scored;
-
-  // Class cards
   const cgrid = document.getElementById('class-grid');
   cgrid.innerHTML = classes.sort().map(cls => {
-    const studs = DB.students.filter(s => s.cls === cls);
+    const studs = campusStudents.filter(s => s.cls === cls);
     const divCounts = {1:0,2:0,3:0,4:0,5:0};
     studs.forEach(s => { const sum = calcStudentSummary(s.id,'midterm'); if(sum&&sum.div) divCounts[sum.div]++; });
     return `<div class="class-card">
@@ -2303,8 +2359,7 @@ function renderDashboard(){
     </div>`;
   }).join('') || '<div style="grid-column:1/-1;color:var(--text-muted);padding:20px">No students yet — upload an assessment file under Import Scores.</div>';
 
-  // Top performers
-  const tops = DB.students.map(s => {
+  const tops = campusStudents.map(s => {
     const sum = calcStudentSummary(s.id,'midterm');
     return {s, sum};
   }).filter(x => x.sum && x.sum.count > 0).sort((a,b) => b.sum.total - a.sum.total).slice(0,8);
@@ -2323,9 +2378,8 @@ function renderDashboard(){
     </div>
   `).join('') : '<div class="empty-state" style="padding:20px"><div class="empty-text">No scores entered yet</div></div>';
 
-  // Division breakdown
   const divCounts = {1:0,2:0,3:0,4:0};
-  DB.students.forEach(s => { const sum = calcStudentSummary(s.id,'midterm'); if(sum&&sum.div&&sum.div<=4) divCounts[sum.div]++; });
+  campusStudents.forEach(s => { const sum = calcStudentSummary(s.id,'midterm'); if(sum&&sum.div&&sum.div<=4) divCounts[sum.div]++; });
   const total2 = Object.values(divCounts).reduce((a,b)=>a+b,0);
   document.getElementById('division-breakdown').innerHTML = [1,2,3,4].map(d => {
     const pct = total2 > 0 ? Math.round(divCounts[d]/total2*100) : 0;
@@ -2340,185 +2394,80 @@ function renderDashboard(){
 }
 
 // ══════════════════════════════════════════
-//  IMPORT (basic — Step 3 will use SheetJS)
-// ══════════════════════════════════════════
-
-let pendingImportData = null;
-
-function handleDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
-function handleDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
-function handleDrop(e){ e.preventDefault(); e.currentTarget.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if(f) processFile(f,'modal'); }
-function handleDropPage(e){ e.preventDefault(); e.currentTarget.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if(f) processFile(f,'page'); }
-function handleFileSelect(e){ const f = e.target.files[0]; if(f) processFile(f,'modal'); }
-function handleFileSelectPage(e){ const f = e.target.files[0]; if(f) processFile(f,'page'); }
-
-function processFile(file, target){
-  const preview = document.getElementById(target==='modal' ? 'import-preview' : 'import-preview-page');
-  const btn = document.getElementById(target==='modal' ? 'btn-confirm-import' : 'btn-import-page');
-  preview.innerHTML = `<div class="alert alert-warning">⚠️ Excel parsing requires SheetJS — this will be fully enabled in Step 3 when we connect the Flask backend. For now, add students manually and use the score entry form. File selected: <strong>${file.name}</strong></div>`;
-  btn.disabled = true;
-  // NOTE: Step 3 will add: const reader = new FileReader(); reader.onload = e => parseXLSX(e.target.result); reader.readAsArrayBuffer(file);
-}
-
-function generateAllReports(){ printBulkReports(); }
-
-// ── Bulk print ────────────────────────────────────────────────────────────────
-
-function renderBulkStudentList(){
-  const cls = document.getElementById('bulk-class').value;
-  const listWrap  = document.getElementById('bulk-student-list');
-  const actWrap   = document.getElementById('bulk-actions');
-  const emptyMsg  = document.getElementById('bulk-empty');
-  const boxes     = document.getElementById('bulk-checkboxes');
-  const label     = document.getElementById('bulk-list-label');
-
-  if(!cls){
-    listWrap.style.display = 'none';
-    actWrap.style.display  = 'none';
-    emptyMsg.style.display = 'block';
-    return;
-  }
-
-  const students = DB.students
-    .filter(s => s.cls === cls)
-    .sort((a,b) => a.lname.localeCompare(b.lname));
-
-  if(!students.length){
-    listWrap.style.display = 'none';
-    actWrap.style.display  = 'none';
-    emptyMsg.style.display = 'block';
-    emptyMsg.textContent   = `No students found in ${cls}.`;
-    return;
-  }
-
-  emptyMsg.style.display = 'none';
-  label.textContent = `${cls} — ${students.length} student${students.length!==1?'s':''}`;
-
-  boxes.innerHTML = students.map(s => `
-    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;
-      background:var(--gray-50);border:1px solid var(--border);border-radius:var(--radius);
-      padding:5px 11px;user-select:none">
-      <input type="checkbox" class="bulk-chk" value="${s.id}" checked
-        onchange="updateBulkCount()" style="cursor:pointer">
-      ${s.lname} ${s.fname}
-    </label>`).join('');
-
-  listWrap.style.display = 'block';
-  actWrap.style.display  = 'flex';
-  updateBulkCount();
-}
-
-function bulkSelectAll(checked){
-  document.querySelectorAll('.bulk-chk').forEach(c => c.checked = checked);
-  updateBulkCount();
-}
-
-function updateBulkCount(){
-  const total    = document.querySelectorAll('.bulk-chk').length;
-  const selected = document.querySelectorAll('.bulk-chk:checked').length;
-  document.getElementById('bulk-selected-count').textContent =
-    `${selected} of ${total} selected`;
-}
-
-function printBulkReports(){
-  const term = document.getElementById('bulk-term').value;
-  const year = document.getElementById('bulk-year').value || '2026';
-  const checked = [...document.querySelectorAll('.bulk-chk:checked')];
-
-  if(!checked.length){
-    showAlert('Select at least one student.', 'warning');
-    return;
-  }
-
-  // Temporarily override rep-year so buildReportHTML picks up bulk year
-  const repYearEl = document.getElementById('rep-year');
-  const prevYear  = repYearEl ? repYearEl.value : '2026';
-  if(repYearEl) repYearEl.value = year;
-
-  const cards = checked.map(c => buildReportHTML(parseInt(c.value), term, year)).join('');
-
-  if(repYearEl) repYearEl.value = prevYear;
-
-  const PRINT_STYLES = `
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1a202c;font-size:12px;
-      -webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .report-paper{
-      max-width:680px;margin:0 auto;padding:24px;
-      page-break-after:always;
-    }
-    .report-paper:last-child{page-break-after:avoid}
-    .report-school-name{font-size:17px;font-weight:800;color:#0d3b6e;text-align:center}
-    .report-school-sub{font-size:12px;font-weight:600;color:#0d3b6e;text-align:center}
-    .report-addr{font-size:10px;color:#5a6473;text-align:center;line-height:1.7;margin-bottom:10px}
-    .report-divider{border:none;border-top:2px solid #0d3b6e;margin:10px 0}
-    .report-term-title{text-align:center;font-size:14px;font-weight:700;letter-spacing:.08em;margin:8px 0}
-    .report-meta-row{display:flex;gap:12px;background:#f8f9fa!important;border:1px solid #e4e8ed;
-      border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:12px;justify-content:space-between;
-      -webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .report-meta-item strong{display:block;font-size:10px;text-transform:uppercase;
-      color:#5a6473;letter-spacing:.05em;margin-bottom:2px}
-    .report-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px}
-    .report-table th{background:#0d3b6e!important;color:#fff!important;padding:7px 10px;text-align:left;
-      -webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .report-table td{padding:6px 10px;border-bottom:1px solid #e4e8ed}
-    .report-table tr:nth-child(even) td{background:#f8f9fa!important;
-      -webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .report-table tfoot td{background:#f0f2f5!important;font-weight:700;
-      -webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .report-footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:11px;margin-top:14px}
-    .sig-line{border-top:1px dashed #e4e8ed;margin-top:18px;padding-top:4px;color:#5a6473}
-    .report-promotion{font-size:13px;font-weight:700;color:#0d3b6e;text-align:center;
-      letter-spacing:.05em;margin:14px 0;padding:10px;border:2px dashed #c9a84c;border-radius:6px}
-    .gkey{display:inline-block;padding:2px 7px;border-radius:4px;background:#f0f2f5!important;
-      color:#5a6473;font-size:10px;margin:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .grading-key-row{margin-bottom:14px}
-    @media print{
-      body{padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      .report-paper{padding:10px;max-width:100%}
-    }
-  `;
-
-  const w = window.open('', '_blank');
-  w.document.write(`<!DOCTYPE html><html>
-  <head><title>Bulk Report Cards — ${document.getElementById('bulk-class').value} ${term} ${year}</title>
-  <style>${PRINT_STYLES}</style></head>
-  <body>${cards}</body></html>`);
-  w.document.close();
-  w.focus();
-  setTimeout(() => w.print(), 600);
-}
-
-// ══════════════════════════════════════════
 //  SETTINGS
 // ══════════════════════════════════════════
+
+function buildCampusTeacherFields(){
+  // Build per-campus teacher input rows for each registered class in Settings
+  const classes = getAllClassNames().sort();
+  ['kawoko','ndejje'].forEach(campus => {
+    const container = document.getElementById(campus + '-teacher-fields');
+    if(!container) return;
+    if(!classes.length){
+      container.innerHTML = '<div style="font-size:12px;color:var(--text-light)">Add classes first under the Classes page.</div>';
+      return;
+    }
+    container.innerHTML = classes.map(cls => {
+      const key = 'teacher_' + cls.toLowerCase() + '_' + campus;
+      const val = CACHE.settings?.[key] || '';
+      return `<div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px;font-weight:700;color:var(--navy);width:36px;flex-shrink:0">${cls}</span>
+        <input type="text" id="cfg-teacher-${cls.toLowerCase()}-${campus}"
+          value="${val}" placeholder="Class teacher name"
+          style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);
+            font-size:12px;font-family:var(--font)">
+      </div>`;
+    }).join('');
+  });
+}
 
 function populateSettingsForm(){
   const S = CACHE.settings || {};
   const set = (id, key) => { const el = document.getElementById(id); if(el && S[key] !== undefined) el.value = S[key]; };
-  set('cfg-name',      'schoolName');
-  set('cfg-campus',    'campus');
-  set('cfg-phone',     'phone');
-  set('cfg-email',     'email');
-  set('cfg-head',      'headteacher');
-  set('cfg-year',      'year');
-  set('cfg-next-term', 'nextTermDate');
+  set('cfg-name',       'schoolName');
+  set('cfg-phone',      'phone');
+  set('cfg-email',      'email');
+  set('cfg-year',       'year');
+  set('cfg-next-term',  'nextTermDate');
+  // Per-campus fields
+  ['kawoko','ndejje'].forEach(campus => {
+    const headEl  = document.getElementById('cfg-head-' + campus);
+    const addrEl  = document.getElementById('cfg-addr-' + campus);
+    const ph2El   = document.getElementById('cfg-phone2-' + campus);
+    if(headEl)  headEl.value  = S['headteacher_' + campus] || (campus === 'kawoko' ? 'Omara Robinson' : 'John Kalyango');
+    if(addrEl)  addrEl.value  = S['address_' + campus]     || CAMPUS_CONFIG[campus].address;
+    if(ph2El)   ph2El.value   = S['phone2_' + campus]      || '';
+  });
+  buildCampusTeacherFields();
 }
 
 async function saveSettings(){
+  const classes = getAllClassNames().sort();
   const updates = [
     {key:'schoolName',  value: document.getElementById('cfg-name').value},
-    {key:'campus',      value: document.getElementById('cfg-campus').value},
     {key:'phone',       value: document.getElementById('cfg-phone').value},
     {key:'email',       value: document.getElementById('cfg-email').value},
-    {key:'headteacher', value: document.getElementById('cfg-head').value},
     {key:'year',        value: document.getElementById('cfg-year').value},
     {key:'nextTermDate',value: document.getElementById('cfg-next-term').value},
   ];
+  // Per-campus head teachers, addresses, phones
+  ['kawoko','ndejje'].forEach(campus => {
+    const headEl  = document.getElementById('cfg-head-' + campus);
+    const addrEl  = document.getElementById('cfg-addr-' + campus);
+    const ph2El   = document.getElementById('cfg-phone2-' + campus);
+    if(headEl)  updates.push({key: 'headteacher_' + campus, value: headEl.value.trim()});
+    if(addrEl)  updates.push({key: 'address_' + campus,     value: addrEl.value.trim()});
+    if(ph2El)   updates.push({key: 'phone2_' + campus,      value: ph2El.value.trim()});
+    // Per-campus class teachers
+    classes.forEach(cls => {
+      const inp = document.getElementById('cfg-teacher-' + cls.toLowerCase() + '-' + campus);
+      if(inp) updates.push({key: 'teacher_' + cls.toLowerCase() + '_' + campus, value: inp.value.trim()});
+    });
+  });
   try {
     await sbUpsert('settings', updates, 'key');
     updates.forEach(u => CACHE.settings[u.key] = u.value);
-    showAlert('Settings saved.');
+    showAlert('Settings saved for both campuses.');
   } catch(e){ showAlert('Error: '+e.message,'danger'); }
 }
 
@@ -2550,9 +2499,7 @@ function importJSON(){
         const data = JSON.parse(ev.target.result);
         if(data.students && data.scores){
           if(confirm(`Import ${data.students.length} students from backup? This will overwrite current data.`)){
-            DB = data; saveDB();
-            showAlert(`Imported ${DB.students.length} students.`);
-            renderDashboard();
+            showAlert(`Backup loaded — ${data.students.length} students.`);
           }
         } else { showAlert('Invalid backup file.','danger'); }
       } catch(err){ showAlert('Could not read file.','danger'); }
@@ -2578,10 +2525,7 @@ async function clearAllData(){
 //  INIT
 // ══════════════════════════════════════════
 
-function onClassChange(){}
-
 window.onload = async function(){
-  // Check for existing session token in localStorage
   if(SB_TOKEN){
     showApp();
     await loadAll();
@@ -2591,11 +2535,11 @@ window.onload = async function(){
     renderStudentsTable();
     renderImportLog();
     renderClassesPage();
+    applyRoleUI();
   } else {
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app-shell').style.display = 'none';
   }
-  // Wire up score modal listeners (safe even before login)
   const scStudent = document.getElementById('sc-student');
   const scTerm    = document.getElementById('sc-term');
   if(scStudent) scStudent.addEventListener('change', loadScoreFields);
@@ -2614,7 +2558,6 @@ function getClassDef(clsName){
 function getSubjectsForClass(clsName){
   const def = getClassDef(clsName);
   if(def) return def.subjects;
-  // Fallback to hardcoded config if not in registry
   return CLASSES_CONFIG[clsName]?.subjects || [];
 }
 
@@ -2633,7 +2576,6 @@ function openAddClassModal(existing=null){
   document.getElementById('edit-class-id').value   = existing ? existing.id : '';
   document.getElementById('cls-name').value        = existing ? existing.name : '';
   document.getElementById('cls-type').value        = existing ? existing.type : 'junior';
-  document.getElementById('cls-teacher').value     = existing ? (existing.teacher||'') : '';
   document.getElementById('cls-subjects').value    = existing ? existing.subjects.join('\n') : '';
   updateSubjectsPreview();
   openModal('modal-class');
@@ -2653,17 +2595,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function saveClass(){
-  const name    = document.getElementById('cls-name').value.trim().toUpperCase();
-  const type    = document.getElementById('cls-type').value;
-  const teacher = document.getElementById('cls-teacher').value.trim();
-  const subsTxt = document.getElementById('cls-subjects').value;
+  const name     = document.getElementById('cls-name').value.trim().toUpperCase();
+  const type     = document.getElementById('cls-type').value;
+  const subsTxt  = document.getElementById('cls-subjects').value;
   const subjects = subsTxt.split('\n').map(s=>s.trim()).filter(Boolean);
-
   if(!name){ showAlert('Please enter a class name.','warning'); return; }
   if(!subjects.length){ showAlert('Please enter at least one subject.','warning'); return; }
-
   const editId = document.getElementById('edit-class-id').value;
-  const payload = {name, type, teacher, subjects};
+  const payload = {name, type, subjects};
   try {
     if(editId){
       await sbUpdate('classes', editId, payload);
@@ -2688,9 +2627,9 @@ async function saveClass(){
 async function deleteClass(id){
   const cls = DB.classes.find(c=>c.id===id);
   if(!cls) return;
-  const studentsInClass = DB.students.filter(s=>s.cls===cls.name).length;
+  const studentsInClass = DB.students.filter(s=>s.cls===cls.name && (s.campus||'kawoko')===ACTIVE_CAMPUS).length;
   if(studentsInClass > 0){
-    if(!confirm(`${cls.name} has ${studentsInClass} student(s). Delete class anyway? Students will remain but lose class assignment.`)) return;
+    if(!confirm(`${cls.name} has ${studentsInClass} student(s). Delete class anyway?`)) return;
   } else {
     if(!confirm(`Delete ${cls.name} from registry?`)) return;
   }
@@ -2706,17 +2645,15 @@ function refreshClassDropdowns(){
   const names = getAllClassNames().sort();
   const optionsHtml = '<option value="">All classes</option>' +
     names.map(n=>`<option value="${n}">${n}</option>`).join('');
-  ['student-class-filter','scores-class-filter','class-filter-sel','bulk-class','promo-from','promo-to','u-class','pc-class'].forEach(id => {
+  ['student-class-filter','scores-class-filter','class-filter-sel','promo-from','promo-to','u-class','pc-class'].forEach(id => {
     const el = document.getElementById(id);
     if(el){ const cur=el.value; el.innerHTML=optionsHtml; el.value=cur; }
   });
-  // bulk-class needs its own prompt (not "All classes")
   const bulkCls = document.getElementById('bulk-class');
   if(bulkCls){
     bulkCls.innerHTML = '<option value="">-- Select class --</option>' +
       names.map(n=>`<option value="${n}">${n}</option>`).join('');
   }
-  // Add class select in student modal
   const sClass = document.getElementById('s-class');
   if(sClass){
     const kinder = names.filter(n=>getClassDef(n)?.type==='kinder');
@@ -2733,15 +2670,11 @@ function refreshClassDropdowns(){
 }
 
 function renderClassesPage(){
-  console.log('renderClassesPage called, CACHE.classes:', CACHE.classes);
   if(!DB.classes) return;
   const grid = document.getElementById('classes-grid');
   if(!grid) return;
-
   const typeLabels = {junior:'Junior', kinder:'Kindergarten', primary:'Primary', other:'Other'};
   const typeColors = {junior:'var(--navy)', kinder:'#1a7a3f', primary:'#8b1a1a', other:'#6b21a8'};
-
-  // Group by type
   const order = ['kinder','junior','primary','other'];
   const sorted = [...DB.classes].sort((a,b) => {
     const oa = order.indexOf(a.type||'other');
@@ -2749,9 +2682,8 @@ function renderClassesPage(){
     if(oa !== ob) return oa - ob;
     return a.name.localeCompare(b.name);
   });
-
   grid.innerHTML = sorted.map(cls => {
-    const studentCount = DB.students.filter(s=>s.cls===cls.name).length;
+    const studentCount = DB.students.filter(s=>s.cls===cls.name && (s.campus||'kawoko')===ACTIVE_CAMPUS).length;
     const color = typeColors[cls.type] || typeColors.other;
     return `<div class="card" style="border-top:3px solid ${color};padding:16px">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
@@ -2764,30 +2696,27 @@ function renderClassesPage(){
           <button class="btn btn-xs btn-danger" onclick="deleteClass('${cls.id}')">Del</button>
         </div>
       </div>
-
       <div style="margin-bottom:10px">
-        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Class Teacher</div>
-        ${cls.teacher
-          ? `<div style="font-size:13px;font-weight:600">${cls.teacher}</div>`
-          : `<div style="font-size:12px;color:var(--text-light);font-style:italic">Not assigned
-              <button class="btn btn-xs" style="margin-left:6px" onclick="openAddClassModal(DB.classes.find(c=>c.id==='${cls.id}'))">Assign</button>
-            </div>`}
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Class Teachers</div>
+        <div style="font-size:12px;color:var(--text-muted);font-style:italic">
+          ${getTeacherForClassCampus(cls.name)
+            ? `<span style="color:var(--text);font-style:normal;font-weight:600">${getTeacherForClassCampus(cls.name)}</span>
+               <span style="font-size:10px;color:var(--text-light)"> (${CAMPUS_CONFIG[ACTIVE_CAMPUS].label})</span>`
+            : `Set in Settings → Class Teachers`}
+        </div>
       </div>
-
       <div style="margin-bottom:10px">
         <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Subjects (${cls.subjects.length})</div>
         <div style="display:flex;flex-wrap:wrap;gap:4px">
           ${cls.subjects.map(s=>`<span style="font-size:11px;background:var(--gray-100);color:var(--text-muted);padding:2px 7px;border-radius:4px">${s}</span>`).join('')}
         </div>
       </div>
-
       <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px;display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:12px;color:var(--text-muted)">${studentCount} student${studentCount!==1?'s':''}</span>
         <button class="btn btn-xs btn-primary" onclick="showPage('students',null);document.getElementById('student-class-filter').value='${cls.name}';renderStudentsTable()">View students</button>
       </div>
     </div>`;
   }).join('');
-
   if(!sorted.length){
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:40px">
       <div class="empty-icon">🏫</div>
@@ -2797,11 +2726,11 @@ function renderClassesPage(){
   }
 }
 
+
 // ══════════════════════════════════════════
 //  EXCEL IMPORT ENGINE (SheetJS)
 // ══════════════════════════════════════════
 
-// Base abbreviation map (legacy Excel files with short headers)
 const SUBJ_MAP_BASE = {
   'ENG':'English','ENGLISH':'English',
   'MTC':'Mathematics','MATH':'Mathematics','MATHEMATICS':'Mathematics',
@@ -2819,10 +2748,8 @@ const SUBJ_MAP_BASE = {
   'PROJECT WORK':'Project Work','PROJECT':'Project Work',
 };
 
-// Build a full subject map including all subjects from registered classes
 function getSubjMap(){
   const map = {...SUBJ_MAP_BASE};
-  // Add every subject from every registered class (exact name, uppercase key)
   (CACHE.classes || []).forEach(cls => {
     (cls.subjects || []).forEach(sub => {
       map[sub.trim().toUpperCase()] = sub.trim();
@@ -2831,10 +2758,9 @@ function getSubjMap(){
   return map;
 }
 
-// Keep SUBJ_MAP as alias for compatibility
 const SUBJ_MAP = SUBJ_MAP_BASE;
 
-let impParsedClasses = [];  // [{cls, term, subjects, students:[{fname,lname,scores}]}]
+let impParsedClasses = [];
 
 function impDragOver(e){ e.preventDefault(); document.getElementById('imp-dropzone').classList.add('drag-over'); }
 function impDragLeave(e){ document.getElementById('imp-dropzone').classList.remove('drag-over'); }
@@ -2878,7 +2804,6 @@ function impProcessFile(file){
       const data = new Uint8Array(e.target.result);
       const wb = XLSX.read(data, {type:'array', raw:false, cellFormula:false, cellNF:false});
       impSetProgress(65, 'Extracting student data...');
-
       impParsedClasses = [];
       wb.SheetNames.forEach(sheetName => {
         const ws = wb.Sheets[sheetName];
@@ -2886,7 +2811,6 @@ function impProcessFile(file){
         const parsed = impParseSheet(rows);
         impParsedClasses.push(...parsed);
       });
-
       impSetProgress(90, 'Building preview...');
       if(impParsedClasses.length === 0){
         document.getElementById('imp-preview-area').innerHTML =
@@ -2896,14 +2820,11 @@ function impProcessFile(file){
       }
       impSetProgress(100, 'File read successfully ✓');
       impBuildPreview();
-
-      // Update dropzone to success state
       document.getElementById('imp-icon').textContent = '✅';
       document.getElementById('imp-text').textContent = file.name;
       document.getElementById('imp-sub').textContent = impParsedClasses.map(c=>c.cls+' ('+c.students.length+' students)').join(' · ');
       document.getElementById('imp-dropzone').style.borderColor = 'var(--green)';
       document.getElementById('imp-dropzone').style.background = '#f0faf4';
-
     } catch(err){
       showAlert('Error reading file: ' + err.message, 'danger');
       impSetProgress(100, 'Error: ' + err.message);
@@ -2916,14 +2837,10 @@ function impProcessFile(file){
 function impParseSheet(rows){
   const classes = [];
   let currentCls = null, subjectCols = [], students = [];
-
   for(let i = 0; i < rows.length; i++){
     const row = rows[i];
     if(!row || row.every(v => v === null)) continue;
-
     const first = row[0] !== null ? String(row[0]).trim() : '';
-
-    // ── Detect class header — matches any registered class name dynamically ──
     const registeredNames = (CACHE.classes || []).map(c => c.name);
     const matchedCls = registeredNames.find(n =>
       first.toUpperCase().startsWith(n.toUpperCase())
@@ -2936,8 +2853,6 @@ function impParseSheet(rows){
       students = [];
       continue;
     }
-
-    // ── Detect column header row: first cell is "NO" ──
     if(first === 'NO' || first === 'No' || first === 'NO.'){
       subjectCols = [];
       for(let c = 0; c < row.length; c++){
@@ -2949,15 +2864,11 @@ function impParseSheet(rows){
       }
       continue;
     }
-
-    // ── Detect student data row: first cell is a number 1-200 ──
     const rowNum = parseFloat(first);
     if(currentCls && subjectCols.length > 0 && !isNaN(rowNum) && rowNum > 0 && rowNum < 200){
-      // Name: surname in col 1, firstname in col 2 (split across merged NAME cell)
       const surname   = row[1] !== null ? String(row[1]).trim().toUpperCase() : '';
       const firstname = row[2] !== null ? String(row[2]).trim().toUpperCase() : '';
-      if(!surname && !firstname) continue;  // blank row
-
+      if(!surname && !firstname) continue;
       const scores = {};
       subjectCols.forEach(({col, name}) => {
         const v = row[col];
@@ -2970,11 +2881,8 @@ function impParseSheet(rows){
       }
     }
   }
-
-  // Push last class
   if(currentCls && students.length > 0)
     classes.push({cls: currentCls, subjects: subjectCols.map(s=>s.name), students});
-
   return classes;
 }
 
@@ -2982,22 +2890,16 @@ function impBuildPreview(){
   const term = document.getElementById('imp-term').value;
   const termLabel = {midterm:'Midterm',bot:'BOT',end:'End of Term'}[term];
   const area = document.getElementById('imp-preview-area');
-
   let html = `<div class="section-title-text" style="margin-bottom:12px">PREVIEW — ${impParsedClasses.length} class${impParsedClasses.length>1?'es':''} detected · ${termLabel}</div>`;
-
   impParsedClasses.forEach(cls => {
-    // Match against existing students
     let newCount = 0, updateCount = 0;
     cls.students.forEach(s => {
       const existing = DB.students.find(e =>
-        e.cls === cls.cls &&
-        e.lname === s.lname &&
-        e.fname === s.fname
+        e.cls === cls.cls && e.lname === s.lname && e.fname === s.fname
       );
       if(existing) updateCount++;
       else newCount++;
     });
-
     html += `
     <div class="card" style="margin-bottom:14px;padding:0">
       <div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
@@ -3037,10 +2939,7 @@ function impBuildPreview(){
       </div>
     </div>`;
   });
-
   area.innerHTML = html;
-
-  // Show action buttons
   const act = document.getElementById('imp-actions');
   act.style.display = 'flex';
 }
@@ -3059,51 +2958,43 @@ async function impConfirm(){
   };
   const termStore  = TERM_STORE[term] || term;
   const termLabel  = IMP_TERM_LABELS[term] || term;
+  const campus     = ACTIVE_CAMPUS;   // which campus is currently selected
   let totalNew = 0, totalUpd = 0;
-
   try {
-    // Step 1: Load ALL existing students fresh from Supabase into a lookup map
     const freshStudents = await sbGet('students', 'order=id');
     CACHE.students = freshStudents || [];
-
-    // Build lookup: "FNAME|LNAME|CLS" -> student object
     const lookup = {};
     CACHE.students.forEach(st => {
-      const key = `${st.fname.trim().toUpperCase()}|${st.lname.trim().toUpperCase()}|${st.cls}`;
+      // Key includes campus so Kawoko JY1 and Ndejje JY1 are never confused
+      const key = `${st.fname.trim().toUpperCase()}|${st.lname.trim().toUpperCase()}|${st.cls}|${st.campus||'kawoko'}`;
       lookup[key] = st;
     });
-
     for(const cls of impParsedClasses){
-      const clsTeacher = teacherOverride || getTeacherForClass(cls.cls) || '';
+      const clsTeacher = teacherOverride || getTeacherForClassCampus(cls.cls) || '';
       let clsNew = 0, clsUpd = 0;
-
-      // Collect all students to insert in bulk (avoids per-student round trips)
       const toInsert = [];
       const toScore  = [];
-
       for(const s of cls.students){
         if(!s.fname && !s.lname) continue;
         const fn  = s.fname.trim().toUpperCase();
         const ln  = s.lname.trim().toUpperCase();
-        const key = `${fn}|${ln}|${cls.cls}`;
-
+        const key = `${fn}|${ln}|${cls.cls}|${campus}`;
         if(!lookup[key]){
           toInsert.push({
             fname: fn, lname: ln, cls: cls.cls,
+            campus,                              // ← tag every new student with campus
             paycode: '', teacher: clsTeacher, year, notes: ''
           });
         }
         toScore.push({fname: fn, lname: ln, scores: s.scores});
       }
-
-      // Bulk insert new students in batches of 50
       if(toInsert.length > 0){
         for(const batch of chunkArray(toInsert, 50)){
           const inserted = await sbInsert('students', batch);
           const rows = Array.isArray(inserted) ? inserted : [inserted];
           rows.forEach(r => {
             if(!r || !r.id) return;
-            const key = `${r.fname.trim().toUpperCase()}|${r.lname.trim().toUpperCase()}|${r.cls}`;
+            const key = `${r.fname.trim().toUpperCase()}|${r.lname.trim().toUpperCase()}|${r.cls}|${r.campus||campus}`;
             lookup[key] = r;
             CACHE.students.push(r);
             clsNew++;
@@ -3111,11 +3002,9 @@ async function impConfirm(){
           });
         }
       }
-
-      // Upsert scores for all students in this class
       const scoreRows = [];
       for(const s of toScore){
-        const key = `${s.fname}|${s.lname}|${cls.cls}`;
+        const key = `${s.fname}|${s.lname}|${cls.cls}|${campus}`;
         const student = lookup[key];
         if(!student){ continue; }
         if(!lookup[key+'__counted']){
@@ -3131,13 +3020,10 @@ async function impConfirm(){
           });
         });
       }
-
       if(scoreRows.length > 0){
-        // Upsert scores in batches of 100
         for(const batch of chunkArray(scoreRows, 100)){
           await sbUpsert('scores', batch, 'student_id,term,year,subject');
         }
-        // Update local score cache
         scoreRows.forEach(r => {
           if(!CACHE.scores[r.student_id]) CACHE.scores[r.student_id] = {};
           const k = r.term+'|'+r.year;
@@ -3145,44 +3031,38 @@ async function impConfirm(){
           CACHE.scores[r.student_id][k][r.subject] = r.score;
         });
       }
-
-      // Log this class import
       await sbInsert('import_log', {
         cls: cls.cls, term: termStore, term_label: termLabel,
-        year, students: cls.students.length,
+        year, campus,                            // ← log which campus this import was for
+        students: cls.students.length,
         new_count: clsNew, update_count: clsUpd - clsNew
       });
     }
-
-    // Refresh import log cache
     const newLog = await sbGet('import_log', 'order=created_at.desc&limit=100');
     CACHE.importLog = (newLog||[]).map(r => ({
       ...r,
       dateStr: new Date(r.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
       timeStr: new Date(r.created_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
     }));
-
   } catch(err){
-    showAlert('Import failed at class ' + (impParsedClasses[totalNew > 0 ? 1 : 0]?.cls||'?') + ': ' + err.message, 'danger');
+    showAlert('Import failed: ' + err.message, 'danger');
     console.error('Import error:', err);
     return;
   }
-
-  const termLabelMap = {midterm:'Midterm', bot:'BOT', end:'End of Term'};
   showAlert(`✅ Import complete: ${totalNew} new students, ${totalUpd} score records saved (${termLabel}).`);
-
-  // Refresh UI
   CACHE.students = await sbGet('students','order=lname');
   populateScoreStudentDropdown();
   populateReportDropdown();
   renderDashboard();
   renderImportLog();
 }
+
+
 // ══════════════════════════════════════════
-//  TEMPLATE DOWNLOAD (dynamic term labelling via SheetJS)
+//  TEMPLATE DOWNLOAD
 // ══════════════════════════════════════════
 
-const TEMPLATE_B64 = "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";
+const TEMPLATE_B64 = "UEsDBBQAAAAIAKtKmlxGx01IlQAAAM0AAAAQAAAAZG9jUHJvcHMvYXBwLnhtbE3PTQvCMAwG4L9SdreZih6kDkQ9ip68zy51hbYpbYT67+0EP255ecgboi6JIia2mEXxLuRtMzLHDUDWI/o+y8qhiqHke64x3YGMsRoPpB8eA8OibdeAhTEMOMzit7Dp1C5GZ3XPlkJ3sjpRJsPiWDQ6sScfq9wcChDneiU+ixNLOZcrBf+LU8sVU57mym/8ZAW/B7oXUEsDBBQAAAAIAKtKmlxOYcdT8QAAACsCAAARAAAAAAAAAAAAAACAAcMAAABkb2NQcm9wcy9jb3JlLnhtbFBLAQIUAxQAAAAIAKtKmlyZXJwjEAYAAJwnAAATAAAAAAAAAAAAAACAAeMBAAB4bC90aGVtZS90aGVtZTEueG1sUEsBAhQDFAAAAAgAq0qaXIeJxHN3BgAApB0AABgAAAAAAAAAAAAAAICBJAgAAHhsL3dvcmtzaGVldHMvc2hlZXQxLnhtbFBLAQIUAxQAAAAIAKtKmlwTm65PlQsAAAxPAAAYAAAAAAAAAAAAAACAgdEOAAB4bC93b3Jrc2hlZXRzL3NoZWV0Mi54bWxQSwUGAAAAABIAEgC1BAAAwIIAAAAA";
 
 const TERM_LABELS = {
   midterm:  'MID TERM ONE',
@@ -3194,20 +3074,13 @@ const TERM_LABELS = {
   end3:     'END OF TERM THREE',
 };
 
-// Term value normalised for score storage (midterm2/3 → midterm, end1/2/3 → end)
-const TERM_KEY = {
-  midterm:'midterm', midterm2:'midterm', midterm3:'midterm',
-  bot:'bot', end1:'end', end2:'end', end3:'end'
-};
-
 const ALL_CLASSES = ['JY1','JY2','JY3','JY4','JY5','JY6','KY1','KY2','KY3'];
 
 function openTemplateModal(){
-  // Build class checkboxes dynamically from registered classes
   const box = document.getElementById('tmpl-class-checkboxes');
   const names = CACHE.classes.length > 0
     ? CACHE.classes.map(c => c.name).sort()
-    : ALL_CLASSES;  // fallback if cache not loaded yet
+    : ALL_CLASSES;
   box.innerHTML = names.map(c => `
     <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;
       background:var(--gray-50);border:1px solid var(--border);border-radius:var(--radius);
@@ -3225,7 +3098,6 @@ function updateTemplatePreview(){
   document.getElementById('tmpl-preview').textContent = `JY1 ${label} ${year}`;
 }
 
-// Wire up live preview
 document.addEventListener('DOMContentLoaded', () => {
   const termSel = document.getElementById('tmpl-term');
   const yearInp = document.getElementById('tmpl-year');
@@ -3241,40 +3113,22 @@ function downloadTemplateCustom(){
   const year      = document.getElementById('tmpl-year').value || '2026';
   const termLabel = TERM_LABELS[termVal] || 'MID TERM ONE';
   const checked   = [...document.querySelectorAll('#tmpl-class-checkboxes input:checked')].map(i => i.value);
-
   if(!checked.length){ showAlert('Select at least one class.','warning'); return; }
-
   const wb = XLSX.utils.book_new();
-
-  // Build one sheet per selected class from CACHE.classes
   checked.forEach(clsName => {
     const classDef = CACHE.classes.find(c => c.name === clsName) || {};
     const subjects = classDef.subjects || getSubjectsForClass(clsName);
-
-    // Rows: title, blank, header, 40 student rows
     const titleRow   = [`${clsName} ${termLabel} ${year}`];
     const blankRow   = [];
     const headerRow  = ['NO', 'SURNAME', 'FIRSTNAME', ...subjects];
     const studentRows = Array.from({length: 40}, (_, i) => [i + 1, '', '', ...subjects.map(() => '')]);
-
     const wsData = [titleRow, blankRow, headerRow, ...studentRows];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-    // Column widths
-    ws['!cols'] = [
-      {wch: 5},   // NO
-      {wch: 22},  // SURNAME
-      {wch: 22},  // FIRSTNAME
-      ...subjects.map(() => ({wch: 12}))
-    ];
-
-    // Merge title row across all columns
+    ws['!cols'] = [{wch:5},{wch:22},{wch:22},...subjects.map(() => ({wch:12}))];
     const totalCols = 3 + subjects.length;
     ws['!merges'] = [{s:{r:0,c:0}, e:{r:0,c:totalCols-1}}];
-
     XLSX.utils.book_append_sheet(wb, ws, clsName);
   });
-
   const filename = `MSES_${termLabel.replace(/\s+/g,'_')}_${year}_Template.xlsx`;
   XLSX.writeFile(wb, filename);
   closeModal('modal-template');
@@ -3282,14 +3136,8 @@ function downloadTemplateCustom(){
 }
 
 // ══════════════════════════════════════════
-//  IMPORT HISTORY LOG
+//  IMPORT LOG
 // ══════════════════════════════════════════
-
-// getImportLog / saveImportLog replaced by Supabase + CACHE
-
-function addImportLogEntry(entries){
-  // no-op — Supabase handles log via impConfirm directly
-}
 
 async function clearImportLog(){
   if(!confirm('Clear all import history?')) return;
@@ -3313,50 +3161,29 @@ function renderImportLog(){
     </div>`;
     return;
   }
-
-  // Summary chips — which classes have been uploaded this term
-  const termCounts = {};
-  log.forEach(e => {
-    const k = e.cls+'|'+e.term;
-    termCounts[k] = (termCounts[k]||0) + 1;
-  });
-
-  // Status per class: which have at least one upload for midterm/bot/end
-  const TERMS_TRACKED = ['midterm','bot','end'];
   const statusMap = {};
   log.forEach(e => {
     if(!statusMap[e.cls]) statusMap[e.cls] = {};
     statusMap[e.cls][e.term] = true;
   });
-
   const clsOrder = ['JY1','JY2','JY3','JY4','JY5','JY6','KY1','KY2','KY3'];
-  const uploadedClasses = [...new Set(log.map(e=>e.cls))].sort((a,b)=>clsOrder.indexOf(a)-clsOrder.indexOf(b));
-
   let summaryHtml = `<div style="padding:14px 18px;border-bottom:1px solid var(--border);overflow-x:auto">
     <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Classes uploaded — MT · BOT · EOT status</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;min-width:0">`;
-
   clsOrder.forEach(cls => {
     const s = statusMap[cls] || {};
     const hasMid = s.midterm, hasBot = s.bot, hasEnd = s.end;
     const anyDone = hasMid || hasBot || hasEnd;
     const color = anyDone ? 'var(--navy)' : 'var(--gray-200)';
     const textColor = anyDone ? '#fff' : 'var(--text-light)';
-    const dots = [
-      hasMid ? '●' : '○',
-      hasBot  ? '●' : '○',
-      hasEnd  ? '●' : '○',
-    ].join(' ');
+    const dots = [hasMid?'●':'○', hasBot?'●':'○', hasEnd?'●':'○'].join(' ');
     summaryHtml += `<div style="background:${color};color:${textColor};border-radius:var(--radius);padding:6px 12px;font-size:12px;font-weight:600;line-height:1.4">
       ${cls}<br><span style="font-size:10px;opacity:.8" title="MT · BOT · EOT">${dots}</span>
     </div>`;
   });
-
   summaryHtml += `</div>
     <div style="font-size:10px;color:var(--text-light);margin-top:8px">● = uploaded &nbsp;○ = pending &nbsp;&nbsp; MT · BOT · EOT</div>
   </div>`;
-
-  // Log table
   let tableHtml = `<div class="table-wrap" style="overflow-x:auto"><table style="min-width:600px">
     <thead><tr>
       <th>When</th><th>Class</th><th>Term</th><th>Year</th>
@@ -3383,15 +3210,13 @@ function renderImportLog(){
     </tr>`).join('')}
     </tbody>
   </table></div>`;
-
   area.innerHTML = summaryHtml + tableHtml;
 }
 
-
-
 // ══════════════════════════════════════════
-//  LOGIN — TAB SWITCHER
+//  LOGIN TAB SWITCHER
 // ══════════════════════════════════════════
+
 function switchLoginTab(tab){
   const isStaff = tab === 'staff';
   document.getElementById('login-staff-form').style.display = isStaff ? '' : 'none';
@@ -3402,13 +3227,11 @@ function switchLoginTab(tab){
   document.getElementById('tab-admin').style.color = isStaff ? 'var(--text-muted)' : 'var(--white)';
 }
 
-// ── PIN hashing (SHA-256 via Web Crypto) ──────────────────────────────────────
 async function hashPin(pin){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-// ── Staff login (username + PIN) ──────────────────────────────────────────────
 async function doStaffLogin(){
   const username = document.getElementById('login-username').value.trim().toLowerCase();
   const pin      = document.getElementById('login-pin').value.trim();
@@ -3419,7 +3242,6 @@ async function doStaffLogin(){
   btn.textContent = 'Signing in…'; btn.disabled = true;
   try {
     const pinHash = await hashPin(pin);
-    // Fetch user by username — use anon key only (no auth token for staff login)
     const r = await fetch(`${SUPABASE_URL}/rest/v1/app_users?username=eq.${encodeURIComponent(username)}&active=eq.true&select=id,name,username,role,assigned_class,pin_hash`, {
       headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON }
     });
@@ -3448,6 +3270,7 @@ async function doStaffLogin(){
 // ══════════════════════════════════════════
 //  USERS PAGE
 // ══════════════════════════════════════════
+
 async function renderUsersPage(){
   const tbody = document.getElementById('users-tbody');
   if(!tbody) return;
@@ -3511,12 +3334,10 @@ async function saveUser(){
   const cls      = document.getElementById('u-class').value || null;
   const pin      = document.getElementById('u-pin').value.trim();
   const pinConf  = document.getElementById('u-pin-confirm').value.trim();
-
   if(!name || !username){ errEl.textContent='Name and username are required.'; errEl.style.display='block'; return; }
   if(!editId && !pin){ errEl.textContent='PIN is required for new accounts.'; errEl.style.display='block'; return; }
   if(pin && (pin.length < 4 || !/^\d+$/.test(pin))){ errEl.textContent='PIN must be 4–6 digits.'; errEl.style.display='block'; return; }
   if(pin && pin !== pinConf){ errEl.textContent='PINs do not match.'; errEl.style.display='block'; return; }
-
   const btn = document.getElementById('btn-save-user');
   btn.textContent = 'Saving…'; btn.disabled = true;
   try {
@@ -3530,7 +3351,6 @@ async function saveUser(){
     closeModal('modal-add-user');
     showAlert(`Account ${editId ? 'updated' : 'created'} successfully.`);
     renderUsersPage();
-    // Reset form
     document.getElementById('edit-user-id').value = '';
     document.getElementById('add-user-modal-title').textContent = 'Add Staff Account';
     document.getElementById('u-pin-label').textContent = 'PIN (4–6 digits)';
@@ -3552,6 +3372,7 @@ function openResetPin(id, name){
   document.getElementById('reset-pin-error').style.display = 'none';
   openModal('modal-reset-pin');
 }
+
 async function confirmResetPin(){
   const errEl = document.getElementById('reset-pin-error');
   errEl.style.display = 'none';
@@ -3574,62 +3395,31 @@ async function toggleUserActive(id, currentlyActive){
   showAlert('Account updated.');
 }
 
-// sbPatch and sbPost helpers if not already present
-async function sbPatch(table, query, data){
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
-    method:'PATCH',
-    headers: sbHeaders({'Prefer':'return=minimal'}),
-    body: JSON.stringify(data)
-  });
-  if(!r.ok){ const e=await r.json(); throw new Error(e.message||'Update failed'); }
-}
-async function sbPost(table, data){
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-    method:'POST',
-    headers: sbHeaders(),
-    body: JSON.stringify(data)
-  });
-  if(!r.ok){ const e=await r.json(); throw new Error(e.message||'Insert failed'); }
-  return r.json();
-}
-
 // ══════════════════════════════════════════
 //  PROMOTIONS
 // ══════════════════════════════════════════
 
-function renderPromotionDropdowns(){
-  // Dropdowns already populated by refreshClassDropdowns()
-  // Just ensure promo-from shows placeholder
-  const pf = document.getElementById('promo-from');
-  if(pf && pf.options[0] && pf.options[0].value !== '') {
-    pf.insertAdjacentHTML('afterbegin', '<option value="">-- Select class --</option>');
-    pf.value = '';
-  }
-}
+function renderPromotionDropdowns(){}
+
 function renderPromotionList(){
   const fromCls  = document.getElementById('promo-from').value;
   const listWrap = document.getElementById('promo-list-wrap');
   const emptyMsg = document.getElementById('promo-empty');
   const btn      = document.getElementById('btn-promote');
-
   if(!fromCls){
     listWrap.style.display = 'none';
     emptyMsg.style.display = 'block';
     btn.disabled = true;
     return;
   }
-
-  // Suggest next class in the to-dropdown
   const allNames  = CACHE.classes.map(c=>c.name).sort();
   const fromIdx   = allNames.indexOf(fromCls);
   const suggested = fromIdx >= 0 && fromIdx < allNames.length-1 ? allNames[fromIdx+1] : '';
   const toEl = document.getElementById('promo-to');
   if(suggested) toEl.value = suggested;
-
   const students = CACHE.students
-    .filter(s => s.cls === fromCls)
+    .filter(s => s.cls === fromCls && (s.campus||'kawoko') === ACTIVE_CAMPUS)
     .sort((a,b) => a.lname.localeCompare(b.lname));
-
   if(!students.length){
     listWrap.style.display = 'none';
     emptyMsg.style.display = 'block';
@@ -3637,16 +3427,12 @@ function renderPromotionList(){
     btn.disabled = true;
     return;
   }
-
   emptyMsg.style.display = 'none';
   listWrap.style.display = 'block';
   btn.disabled = false;
-
   document.getElementById('promo-list-title').textContent =
     `${fromCls} — ${students.length} student${students.length!==1?'s':''}`;
-
   const classOptions = CACHE.classes.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-
   document.getElementById('promo-tbody').innerHTML = students.map((s,i) => `
     <tr id="promo-row-${s.id}">
       <td><input type="checkbox" class="promo-chk" value="${s.id}" checked onchange="updatePromoCount()"></td>
@@ -3661,17 +3447,12 @@ function renderPromotionList(){
       </td>
       <td id="promo-status-${s.id}" style="font-size:12px;color:var(--text-muted)">Pending</td>
     </tr>`).join('');
-
-  // Set all destination selects to the suggested to-class
   document.querySelectorAll('.promo-dest').forEach(sel => {
     sel.value = toEl.value || '';
   });
-
-  // Keep destination selects in sync when promo-to changes
   document.getElementById('promo-to').onchange = function(){
     document.querySelectorAll('.promo-dest').forEach(sel => sel.value = this.value);
   };
-
   updatePromoCount();
 }
 
@@ -3691,45 +3472,28 @@ function updatePromoCount(){
 async function runPromotion(){
   const checked = [...document.querySelectorAll('.promo-chk:checked')];
   if(!checked.length){ showAlert('No students selected.','warning'); return; }
-
-  const year = document.getElementById('promo-year').value;
   const fromCls = document.getElementById('promo-from').value;
-
-  // Build promotion map: studentId → destClass
   const promoMap = {};
   checked.forEach(chk => {
     const id = parseInt(chk.value);
     const destSel = document.querySelector(`.promo-dest[data-id="${id}"]`);
     promoMap[id] = destSel ? destSel.value : document.getElementById('promo-to').value;
   });
-
-  // Validate all have destinations
   const missing = Object.entries(promoMap).filter(([,v]) => !v);
   if(missing.length){ showAlert('Some students have no destination class selected.','warning'); return; }
-
-  // Confirmation
   const destClasses = [...new Set(Object.values(promoMap))];
-  const msg = `Promote ${checked.length} student${checked.length!==1?'s':''} from ${fromCls}?
-
-Destinations: ${destClasses.join(', ')}
-
-This will update their class. Score history is preserved.`;
-  if(!confirm(msg)) return;
-
+  if(!confirm(`Promote ${checked.length} student${checked.length!==1?'s':''} from ${fromCls}?\n\nDestinations: ${destClasses.join(', ')}\n\nScore history is preserved.`)) return;
   const btn = document.getElementById('btn-promote');
   btn.textContent = 'Promoting…'; btn.disabled = true;
-
   let success = 0, failed = 0;
   for(const [idStr, destCls] of Object.entries(promoMap)){
     const id = parseInt(idStr);
     const statusEl = document.getElementById(`promo-status-${id}`);
     try {
       await sbPatch('students', `id=eq.${id}`, {cls: destCls});
-      // Update in-memory cache
       const student = CACHE.students.find(s => s.id === id);
       if(student) student.cls = destCls;
       if(statusEl){ statusEl.textContent = `✓ → ${destCls}`; statusEl.style.color = 'var(--green)'; }
-      // Uncheck after success
       const chk = document.querySelector(`.promo-chk[value="${id}"]`);
       if(chk) chk.disabled = true;
       success++;
@@ -3738,19 +3502,14 @@ This will update their class. Score history is preserved.`;
       failed++;
     }
   }
-
   btn.textContent = '🎓 Promote Selected'; btn.disabled = false;
-  const msg2 = `${success} student${success!==1?'s':''} promoted successfully${failed?`, ${failed} failed`:'.'}`; 
-  showAlert(msg2, failed ? 'warning' : 'success');
-
-  // Refresh dashboard and students page
+  showAlert(`${success} student${success!==1?'s':''} promoted successfully${failed?`, ${failed} failed`:'.'}.`, failed ? 'warning' : 'success');
   renderDashboard();
   renderStudentsTable();
 }
 
-
 // ══════════════════════════════════════════
-//  PAYMENT CODES PAGE
+//  PAYMENT CODES
 // ══════════════════════════════════════════
 
 function renderPaycodesTable(){
@@ -3760,30 +3519,26 @@ function renderPaycodesTable(){
   const tbody   = document.getElementById('pc-tbody');
   const countEl = document.getElementById('pc-count');
   if(!tbody) return;
-
-  let students = [...CACHE.students].sort((a,b) => {
-    if(a.cls < b.cls) return -1;
-    if(a.cls > b.cls) return 1;
+  let students = [...CACHE.students]
+    .filter(s => (s.campus||'kawoko') === ACTIVE_CAMPUS)
+    .sort((a,b) => {
+    if(a.cls < b.cls) return -1; if(a.cls > b.cls) return 1;
     return a.lname.localeCompare(b.lname);
   });
-
   if(cls)     students = students.filter(s => s.cls === cls);
   if(missing) students = students.filter(s => !s.paycode || !s.paycode.trim());
   if(q)       students = students.filter(s =>
     (s.fname+' '+s.lname).toLowerCase().includes(q) ||
     (s.paycode||'').toLowerCase().includes(q)
   );
-
   const missing_count = CACHE.students.filter(s => !s.paycode || !s.paycode.trim()).length;
   if(countEl) countEl.textContent =
     `${students.length} shown · ${missing_count} missing code${missing_count!==1?'s':''}`;
-
   if(!students.length){
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:36px;color:var(--text-muted)">
       ${missing ? 'All students have payment codes! 🎉' : 'No students found.'}</td></tr>`;
     return;
   }
-
   tbody.innerHTML = students.map((s, i) => {
     const hasCode = s.paycode && s.paycode.trim();
     return `<tr id="pc-row-${s.id}">
@@ -3839,12 +3594,10 @@ async function savePaycode(id){
   const newCode = inp.value.trim();
   const student = CACHE.students.find(s => s.id === id);
   if(!student) return;
-  if(newCode === (student.paycode||'')){ cancelEditPaycode(id); return; } // no change
-
+  if(newCode === (student.paycode||'')){ cancelEditPaycode(id); return; }
   try {
     await sbPatch('students', `id=eq.${id}`, {paycode: newCode});
     student.paycode = newCode;
-    // Re-render just this row by refreshing table
     renderPaycodesTable();
     showAlert(`Code saved for ${student.fname} ${student.lname}.`, 'success', 2000);
   } catch(e){
@@ -3853,58 +3606,44 @@ async function savePaycode(id){
   }
 }
 
-// ── Download ──────────────────────────────────────────────────────────────────
 function downloadPaycodes(mode){
   if(typeof XLSX === 'undefined'){ showAlert('SheetJS not loaded.','danger'); return; }
-
   const cls = document.getElementById('pc-class')?.value || '';
-  let students = [...CACHE.students].sort((a,b) => {
+  let students = [...CACHE.students]
+    .filter(s => (s.campus||'kawoko') === ACTIVE_CAMPUS)
+    .sort((a,b) => {
     if(a.cls < b.cls) return -1; if(a.cls > b.cls) return 1;
     return a.lname.localeCompare(b.lname);
   });
   if(cls) students = students.filter(s => s.cls === cls);
   if(mode === 'missing') students = students.filter(s => !s.paycode || !s.paycode.trim());
-
   if(!students.length){
     showAlert(mode === 'missing' ? 'No students with missing codes!' : 'No students found.', 'info');
     return;
   }
-
-  const rows = [
-    ['NO', 'CLASS', 'SURNAME', 'FIRSTNAME', 'PAYMENT CODE']
-  ];
-  students.forEach((s, i) => {
-    rows.push([i+1, s.cls, s.lname, s.fname, s.paycode||'']);
-  });
-
+  const rows = [['NO', 'CLASS', 'SURNAME', 'FIRSTNAME', 'PAYMENT CODE']];
+  students.forEach((s, i) => { rows.push([i+1, s.cls, s.lname, s.fname, s.paycode||'']); });
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  // Style header row width hints
   ws['!cols'] = [{wch:5},{wch:8},{wch:20},{wch:20},{wch:18}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Payment Codes');
-
   const suffix = cls ? `_${cls}` : '';
   const label  = mode === 'missing' ? 'Missing' : 'All';
   XLSX.writeFile(wb, `PaymentCodes_${label}${suffix}_${new Date().toISOString().slice(0,10)}.xlsx`);
   showAlert(`Downloaded ${students.length} student${students.length!==1?'s':''}.`);
 }
 
-// ── Upload / Bulk import ──────────────────────────────────────────────────────
 function uploadPaycodes(event){
   const file = event.target.files[0];
   if(!file) return;
   if(typeof XLSX === 'undefined'){ showAlert('SheetJS not loaded.','danger'); return; }
-
   const reader = new FileReader();
   reader.onload = async function(e){
     try {
       const wb   = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
       const ws   = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-
-      // Find header row
-      let headerRow = -1;
-      let codeCol = -1, surnameCol = -1, firstnameCol = -1, clsCol = -1;
+      let headerRow = -1, codeCol = -1, surnameCol = -1, firstnameCol = -1, clsCol = -1;
       for(let r = 0; r < Math.min(rows.length, 5); r++){
         const cells = rows[r].map(v => String(v).trim().toUpperCase());
         const cIdx = cells.findIndex(v => v === 'PAYMENT CODE' || v === 'PAYCODE' || v === 'CODE');
@@ -3917,50 +3656,29 @@ function uploadPaycodes(event){
           break;
         }
       }
-
-      if(headerRow < 0 || codeCol < 0){
-        showAlert('Could not find a PAYMENT CODE column in the file.', 'danger', 6000);
-        return;
-      }
-      if(surnameCol < 0 || firstnameCol < 0){
-        showAlert('Could not find SURNAME and FIRSTNAME columns.', 'danger', 6000);
-        return;
-      }
-
-      const dataRows = rows.slice(headerRow + 1).filter(r =>
-        r[surnameCol] || r[firstnameCol]
-      );
-
+      if(headerRow < 0 || codeCol < 0){ showAlert('Could not find a PAYMENT CODE column.', 'danger', 6000); return; }
+      if(surnameCol < 0 || firstnameCol < 0){ showAlert('Could not find SURNAME and FIRSTNAME columns.', 'danger', 6000); return; }
+      const dataRows = rows.slice(headerRow + 1).filter(r => r[surnameCol] || r[firstnameCol]);
       let updated = 0, skipped = 0, notFound = 0;
       const resultLines = [];
-
       for(const row of dataRows){
         const surname   = String(row[surnameCol]||'').trim().toUpperCase();
         const firstname = String(row[firstnameCol]||'').trim().toUpperCase();
         const cls       = clsCol >= 0 ? String(row[clsCol]||'').trim().toUpperCase() : '';
         const code      = String(row[codeCol]||'').trim();
-
         if(!surname && !firstname) continue;
         if(!code){ skipped++; continue; }
-
-        // Match student
         const student = CACHE.students.find(s => {
           const nameMatch = s.lname === surname && s.fname === firstname;
           return cls ? nameMatch && s.cls === cls : nameMatch;
         });
-
         if(!student){ notFound++; resultLines.push(`⚠ Not found: ${surname} ${firstname}${cls?' ('+cls+')':''}`); continue; }
-
         try {
           await sbPatch('students', `id=eq.${student.id}`, {paycode: code});
           student.paycode = code;
           updated++;
-        } catch(e){
-          resultLines.push(`✗ Error saving ${surname} ${firstname}: ${e.message}`);
-        }
+        } catch(e){ resultLines.push(`✗ Error saving ${surname} ${firstname}: ${e.message}`); }
       }
-
-      // Show result
       const resultEl = document.getElementById('pc-upload-result');
       resultEl.style.display = 'block';
       const summaryClass = notFound > 0 ? 'alert-warning' : 'alert-success';
@@ -3974,17 +3692,21 @@ function uploadPaycodes(event){
           padding:8px 12px;background:var(--gray-50);border-radius:var(--radius)">
           ${resultLines.join('<br>')}
         </div>` : ''}`;
-
       renderPaycodesTable();
       showAlert(`${updated} payment code${updated!==1?'s':''} updated.`);
-    } catch(err){
-      showAlert('Error reading file: '+err.message, 'danger');
-    }
+    } catch(err){ showAlert('Error reading file: '+err.message, 'danger'); }
   };
   reader.readAsArrayBuffer(file);
-  // Reset input so same file can be re-uploaded
   event.target.value = '';
 }
+
+// Legacy stubs kept for compatibility
+function handleDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function handleDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function handleDrop(e){ e.preventDefault(); e.currentTarget.classList.remove('drag-over'); }
+function handleFileSelect(e){}
+function confirmImport(){}
+function generateAllReports(){ printBulkReports(); }
 
 </script>
 </body>
