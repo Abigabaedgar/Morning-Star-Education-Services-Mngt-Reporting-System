@@ -1125,6 +1125,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
           <select id="u-role" onchange="toggleClassField()">
             <option value="teacher">Teacher</option>
             <option value="headteacher">Head Teacher</option>
+            <option value="dataentry">Data Entry</option>
             <option value="admin">Admin</option>
           </select>
         </div>
@@ -1295,17 +1296,20 @@ function getRole(){ return SESSION ? SESSION.role : (SB_TOKEN ? 'admin' : null);
 function isAdmin(){ return getRole() === 'admin'; }
 function isHeadTeacher(){ return getRole() === 'headteacher'; }
 function isTeacher(){ return getRole() === 'teacher'; }
+function isDataEntry(){ return getRole() === 'dataentry'; }
 function canEdit(){ return isAdmin(); }
+// Data entry can access import, reports, paycodes, students, scores
+function canDataEntry(){ return isAdmin() || isDataEntry(); }
 
 function applyRoleUI(){
   const role = getRole();
   const navAccess = {
     'nav-classes':    ['admin'],
-    'nav-import':     ['admin'],
+    'nav-import':     ['admin','dataentry'],
     'nav-promotions': ['admin'],
     'nav-settings':   ['admin'],
     'nav-users':      ['admin'],
-    'nav-paycodes':   ['admin'],
+    'nav-paycodes':   ['admin','dataentry'],
   };
   Object.entries(navAccess).forEach(([id, allowed]) => {
     const el = document.getElementById(id);
@@ -1321,10 +1325,25 @@ function applyRoleUI(){
       }
     }
   });
+  // Import Excel topbar button — visible to admin and dataentry
   const importBtn = document.querySelector('.topbar-actions .btn-sm');
-  if(importBtn) importBtn.style.display = isAdmin() ? '' : 'none';
+  if(importBtn) importBtn.style.display = canDataEntry() ? '' : 'none';
+
+  // Delete buttons — hidden from dataentry
+  document.querySelectorAll('.btn-danger').forEach(btn => {
+    if(btn.textContent.trim() === 'Del' || btn.onclick?.toString().includes('deleteStudent')){
+      btn.style.display = isAdmin() ? '' : 'none';
+    }
+  });
+
+  // Role badge in sidebar footer
   const lbl = document.getElementById('sidebar-user-email');
-  if(lbl && SESSION) lbl.textContent = SESSION.name + ' · ' + SESSION.role;
+  if(lbl && SESSION){
+    const roleLabels = {admin:'Admin', headteacher:'Head Teacher', teacher:'Teacher', dataentry:'Data Entry'};
+    lbl.textContent = SESSION.name + ' · ' + (roleLabels[SESSION.role] || SESSION.role);
+  }
+
+  // Teacher class restriction
   if(isTeacher() && SESSION?.assigned_class){
     const cls = SESSION.assigned_class;
     ['student-class-filter','rep-class','bulk-class','scores-class-filter'].forEach(id => {
@@ -1336,6 +1355,18 @@ function applyRoleUI(){
     renderStudentsTable();
     renderScoresPage();
     populateReportDropdown();
+  }
+
+  // Dataentry campus restriction — locked to their assigned campus
+  if(isDataEntry() && SESSION?.assigned_class){
+    // assigned_class for dataentry stores the campus e.g. 'kawoko' or 'ndejje'
+    const campus = SESSION.assigned_class;
+    if(campus === 'kawoko' || campus === 'ndejje'){
+      switchCampus(campus);
+      // Hide campus switcher — dataentry can't change campus
+      const switcher = document.getElementById('campus-switcher');
+      if(switcher) switcher.style.display = 'none';
+    }
   }
 }
 
@@ -1703,9 +1734,15 @@ function showPage(name, navEl){
   }
   if(name==='students') renderStudentsTable();
   if(name==='scores') renderScoresPage();
-  const adminOnlyPages = ['import','classes','promotions','settings','users','paycodes'];
+  const adminOnlyPages = ['classes','promotions','settings','users'];
+  const dataEntryPages = ['import','paycodes'];
   if(adminOnlyPages.includes(name) && !isAdmin()){
     showAlert('Access denied — admin only.', 'danger');
+    showPage('dashboard', document.querySelector('.nav-item'));
+    return;
+  }
+  if(dataEntryPages.includes(name) && !canDataEntry()){
+    showAlert('Access denied.', 'danger');
     showPage('dashboard', document.querySelector('.nav-item'));
     return;
   }
@@ -1785,7 +1822,7 @@ function renderStudentsTable(){
         <div class="flex gap-10 items-center">
           <button class="btn btn-xs" onclick="openScoresFor(${s.id})">Scores</button>
           <button class="btn btn-xs btn-primary" onclick="openReportFor(${s.id})">Report</button>
-          <button class="btn btn-xs btn-danger" onclick="deleteStudent(${s.id})">Del</button>
+          ${isAdmin() ? `<button class="btn btn-xs btn-danger" onclick="deleteStudent(${s.id})">Del</button>` : ''}
         </div>
       </td>
     </tr>`;
@@ -3280,8 +3317,8 @@ async function renderUsersPage(){
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">No users yet. Add the first one above.</td></tr>';
       return;
     }
-    const roleBadge = r => r==='admin' ? 'badge-navy' : r==='headteacher' ? 'badge-gold' : 'badge-d2';
-    const roleLabel = r => r==='admin' ? 'Admin' : r==='headteacher' ? 'Head Teacher' : 'Teacher';
+    const roleBadge = r => r==='admin' ? 'badge-navy' : r==='headteacher' ? 'badge-gold' : r==='dataentry' ? 'badge-d1' : 'badge-d2';
+    const roleLabel = r => r==='admin' ? 'Admin' : r==='headteacher' ? 'Head Teacher' : r==='dataentry' ? 'Data Entry' : 'Teacher';
     tbody.innerHTML = rows.map((u,i) => `<tr>
       <td class="td-muted">${i+1}</td>
       <td class="td-name">${u.name}</td>
@@ -3304,8 +3341,22 @@ async function renderUsersPage(){
 
 function toggleClassField(){
   const role = document.getElementById('u-role').value;
-  const wrap = document.getElementById('u-class-wrap');
-  wrap.style.display = role === 'teacher' ? '' : 'none';
+  const wrap  = document.getElementById('u-class-wrap');
+  const label = wrap?.querySelector('label');
+  wrap.style.display = (role === 'teacher' || role === 'dataentry') ? '' : 'none';
+  if(label){
+    label.textContent = role === 'dataentry' ? 'Campus Access' : 'Assigned Class';
+  }
+  // For dataentry, replace class options with campus options
+  const sel = document.getElementById('u-class');
+  if(role === 'dataentry'){
+    sel.innerHTML = `
+      <option value="kawoko">Kawoko Campus</option>
+      <option value="ndejje">Ndejje Campus</option>`;
+  } else {
+    // Restore class options
+    refreshClassDropdowns();
+  }
 }
 
 function openEditUser(u){
