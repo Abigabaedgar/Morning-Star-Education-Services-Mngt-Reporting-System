@@ -313,9 +313,21 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
         <div class="form-group">
           <label>Term</label>
           <select id="sc-term" onchange="loadScoreFields()">
-            <option value="midterm">Midterm (30%)</option>
-            <option value="bot">Beginning of Term (BOT)</option>
-            <option value="end">End of Term (70%)</option>
+            <optgroup label="Term 1">
+                  <option value="bot1">BOT — Term 1</option>
+                  <option value="midterm1">Midterm — Term 1 (30%)</option>
+                  <option value="end1">End of Term 1 (70%)</option>
+                </optgroup>
+                <optgroup label="Term 2">
+                  <option value="bot2">BOT — Term 2</option>
+                  <option value="midterm2">Midterm — Term 2 (30%)</option>
+                  <option value="end2">End of Term 2 (70%)</option>
+                </optgroup>
+                <optgroup label="Term 3">
+                  <option value="bot3">BOT — Term 3</option>
+                  <option value="midterm3">Midterm — Term 3 (30%)</option>
+                  <option value="end3">End of Term 3 (70%)</option>
+                </optgroup>
           </select>
         </div>
         <div class="form-group">
@@ -362,9 +374,21 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
         <div class="form-group">
           <label>Term type</label>
           <select id="import-term">
-            <option value="midterm">Midterm</option>
-            <option value="bot">BOT</option>
-            <option value="end">End of Term</option>
+            <optgroup label="Term 1">
+              <option value="bot1">BOT — Term 1</option>
+              <option value="midterm1">Midterm — Term 1</option>
+              <option value="end1">End of Term 1</option>
+            </optgroup>
+            <optgroup label="Term 2">
+              <option value="bot2">BOT — Term 2</option>
+              <option value="midterm2">Midterm — Term 2</option>
+              <option value="end2">End of Term 2</option>
+            </optgroup>
+            <optgroup label="Term 3">
+              <option value="bot3">BOT — Term 3</option>
+              <option value="midterm3">Midterm — Term 3</option>
+              <option value="end3">End of Term 3</option>
+            </optgroup>
           </select>
         </div>
         <div class="form-group">
@@ -647,9 +671,21 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <option value="2027">2027</option>
           </select>
           <select id="scores-term-filter" onchange="renderScoresPage()" style="width:170px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font)">
-            <option value="midterm">Midterm (30%)</option>
-            <option value="bot">Beginning of Term</option>
-            <option value="end">End of Term (70%)</option>
+            <optgroup label="Term 1">
+                  <option value="bot1">BOT — Term 1</option>
+                  <option value="midterm1">Midterm — Term 1 (30%)</option>
+                  <option value="end1">End of Term 1 (70%)</option>
+                </optgroup>
+                <optgroup label="Term 2">
+                  <option value="bot2">BOT — Term 2</option>
+                  <option value="midterm2">Midterm — Term 2 (30%)</option>
+                  <option value="end2">End of Term 2 (70%)</option>
+                </optgroup>
+                <optgroup label="Term 3">
+                  <option value="bot3">BOT — Term 3</option>
+                  <option value="midterm3">Midterm — Term 3 (30%)</option>
+                  <option value="end3">End of Term 3 (70%)</option>
+                </optgroup>
           </select>
         </div>
         <div id="scores-content"></div>
@@ -1948,7 +1984,7 @@ function renderScoresPage(){
         </div>
         <div class="empty-state" style="padding:24px">
           <div class="empty-icon" style="font-size:28px">📭</div>
-          <div class="empty-text">No ${({midterm:'Midterm',bot:'BOT',end:'End of Term'})[term]} scores for ${year}</div>
+          <div class="empty-text">No ${({bot1:'BOT Term 1',bot2:'BOT Term 2',bot3:'BOT Term 3',midterm1:'Midterm Term 1',midterm2:'Midterm Term 2',midterm3:'Midterm Term 3',end1:'End of Term 1',end2:'End of Term 2',end3:'End of Term 3',bot:'BOT',midterm:'Midterm',end:'End of Term'})[term]||term} scores for ${year}</div>
           <div class="empty-sub">Upload an assessment file under Import Scores</div>
         </div>
       </div>`;
