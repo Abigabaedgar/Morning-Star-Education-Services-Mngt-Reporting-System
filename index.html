@@ -170,7 +170,7 @@ tbody tr:hover td{background:var(--gray-50)}
 .chip.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
 
 /* ── Report Card ──────────────────────────────── */
-.report-paper{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;max-width:640px;margin:0 auto;box-shadow:var(--shadow)}
+.report-paper{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;max-width:680px;margin:0 auto;box-shadow:var(--shadow)}
 .report-school-name{font-size:17px;font-weight:800;color:var(--navy);text-align:center;letter-spacing:.01em}
 .report-school-sub{font-size:12px;font-weight:600;color:var(--navy);text-align:center;margin:2px 0}
 .report-addr{font-size:10px;color:var(--text-muted);text-align:center;line-height:1.7;margin-bottom:10px}
@@ -594,9 +594,21 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <option value="2027">2027</option>
           </select>
           <select id="student-term-filter" onchange="renderStudentsTable()" style="width:160px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font)">
-            <option value="midterm">Midterm scores</option>
-            <option value="bot">BOT scores</option>
-            <option value="end">End of Term scores</option>
+            <optgroup label="Term 1">
+              <option value="bot1">BOT Term 1</option>
+              <option value="midterm1">Midterm Term 1</option>
+              <option value="end1">End of Term 1</option>
+            </optgroup>
+            <optgroup label="Term 2">
+              <option value="bot2">BOT Term 2</option>
+              <option value="midterm2">Midterm Term 2</option>
+              <option value="end2">End of Term 2</option>
+            </optgroup>
+            <optgroup label="Term 3">
+              <option value="bot3">BOT Term 3</option>
+              <option value="midterm3">Midterm Term 3</option>
+              <option value="end3">End of Term 3</option>
+            </optgroup>
           </select>
         </div>
         <div class="card" style="padding:0">
@@ -605,7 +617,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
               <thead>
                 <tr>
                   <th>#</th><th>Name</th><th>Class</th><th>Payment Code</th>
-                  <th>Class Teacher</th><th>Midterm Total</th><th>Division</th><th>Actions</th>
+                  <th>Class Teacher</th><th id="score-col-header">Score Total</th><th>Division</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody id="students-tbody">
@@ -665,9 +677,21 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <div class="form-group">
               <label>Term</label>
               <select id="rep-term" onchange="renderReportCard()">
-                <option value="midterm">Midterm</option>
-                <option value="bot">Beginning of Term</option>
-                <option value="end">End of Term</option>
+                <optgroup label="Term 1">
+                  <option value="bot1">BOT — Term 1</option>
+                  <option value="midterm1">Midterm — Term 1</option>
+                  <option value="end1">End of Term 1</option>
+                </optgroup>
+                <optgroup label="Term 2">
+                  <option value="bot2">BOT — Term 2</option>
+                  <option value="midterm2">Midterm — Term 2</option>
+                  <option value="end2">End of Term 2</option>
+                </optgroup>
+                <optgroup label="Term 3">
+                  <option value="bot3">BOT — Term 3</option>
+                  <option value="midterm3">Midterm — Term 3</option>
+                  <option value="end3">End of Term 3</option>
+                </optgroup>
               </select>
             </div>
             <div class="form-group">
@@ -700,9 +724,21 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <div class="form-group">
               <label>Term</label>
               <select id="bulk-term">
-                <option value="midterm">Midterm</option>
-                <option value="bot">Beginning of Term</option>
-                <option value="end">End of Term</option>
+                <optgroup label="Term 1">
+                  <option value="bot1">BOT — Term 1</option>
+                  <option value="midterm1">Midterm — Term 1</option>
+                  <option value="end1">End of Term 1</option>
+                </optgroup>
+                <optgroup label="Term 2">
+                  <option value="bot2">BOT — Term 2</option>
+                  <option value="midterm2">Midterm — Term 2</option>
+                  <option value="end2">End of Term 2</option>
+                </optgroup>
+                <optgroup label="Term 3">
+                  <option value="bot3">BOT — Term 3</option>
+                  <option value="midterm3">Midterm — Term 3</option>
+                  <option value="end3">End of Term 3</option>
+                </optgroup>
               </select>
             </div>
             <div class="form-group">
@@ -829,9 +865,21 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <div class="form-group">
               <label>Term type</label>
               <select id="imp-term">
-                <option value="midterm">Midterm (30%)</option>
-                <option value="bot">Beginning of Term (BOT)</option>
-                <option value="end">End of Term (70%)</option>
+                <optgroup label="Term 1">
+                  <option value="bot1">BOT — Term 1</option>
+                  <option value="midterm1">Midterm — Term 1 (30%)</option>
+                  <option value="end1">End of Term 1 (70%)</option>
+                </optgroup>
+                <optgroup label="Term 2">
+                  <option value="bot2">BOT — Term 2</option>
+                  <option value="midterm2">Midterm — Term 2 (30%)</option>
+                  <option value="end2">End of Term 2 (70%)</option>
+                </optgroup>
+                <optgroup label="Term 3">
+                  <option value="bot3">BOT — Term 3</option>
+                  <option value="midterm3">Midterm — Term 3 (30%)</option>
+                  <option value="end3">End of Term 3 (70%)</option>
+                </optgroup>
               </select>
             </div>
             <div class="form-group">
@@ -1130,7 +1178,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
           </select>
         </div>
         <div class="form-group" id="u-class-wrap">
-          <label>Assigned Class</label>
+          <label id="u-class-label">Assigned Class</label>
           <select id="u-class"><option value="">-- Select class --</option></select>
         </div>
         <div class="form-group">
@@ -1189,7 +1237,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 const SUPABASE_URL  = 'https://jchnkiqvtxnhdnknscok.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjaG5raXF2dHhuaGRua25zY29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNjQ1MTgsImV4cCI6MjA5Mjc0MDUxOH0.0adCHRyolPjSwNIFfb7QbD_eOEmrY2GVtkVm8M895x8';
 
-// ── Grading scale ────────────────────────────────────────────────────────────
+// ── Grading scale ──────────────────────────────────────────────────────────────
 const GRADING_SCALE = [
   {min:90, max:100, grade:'D1', comment:'Excellent; outstanding achievement.'},
   {min:80, max:89,  grade:'D2', comment:'Very good; aim higher.'},
@@ -1217,7 +1265,7 @@ const CLASSES_CONFIG = {
 let SB_TOKEN = localStorage.getItem('mses_sb_token') || null;
 let SESSION = JSON.parse(localStorage.getItem('mses_session') || 'null');
 
-// ── Active campus (persisted in localStorage) ─────────────────────────────────
+// ── Active campus ──────────────────────────────────────────────────────────────
 let ACTIVE_CAMPUS = localStorage.getItem('mses_campus') || 'kawoko';
 
 const CAMPUS_CONFIG = {
@@ -1236,59 +1284,41 @@ const CAMPUS_CONFIG = {
 };
 
 function getActiveCampus(){ return ACTIVE_CAMPUS; }
-
 function getCampusSetting(key){
-  // key is e.g. 'headteacher' → looks up 'headteacher_kawoko' or 'headteacher_ndejje'
   const full = key + '_' + ACTIVE_CAMPUS;
   return CACHE.settings?.[full] || CACHE.settings?.[key] || '';
 }
-
 function getHeadTeacher(){
-  return getCampusSetting('headteacher') ||
-    CAMPUS_CONFIG[ACTIVE_CAMPUS]?.defaultHead || '';
+  return getCampusSetting('headteacher') || CAMPUS_CONFIG[ACTIVE_CAMPUS]?.defaultHead || '';
 }
-
 function getCampusLabel(){
-  return getCampusSetting('campusLabel') ||
-    CAMPUS_CONFIG[ACTIVE_CAMPUS]?.label || '';
+  return getCampusSetting('campusLabel') || CAMPUS_CONFIG[ACTIVE_CAMPUS]?.label || '';
 }
-
 function getCampusAddress(){
-  return getCampusSetting('address') ||
-    CAMPUS_CONFIG[ACTIVE_CAMPUS]?.addressLine || '';
+  return getCampusSetting('address') || CAMPUS_CONFIG[ACTIVE_CAMPUS]?.addressLine || '';
 }
-
 function getCampusPhone2(){
   return getCampusSetting('phone2') || CACHE.settings?.phone2 || '';
 }
-
 function getTeacherForClassCampus(clsName){
-  // Per-campus teacher stored as teacher_{cls}_{campus} in settings
   const key = 'teacher_' + clsName.toLowerCase() + '_' + ACTIVE_CAMPUS;
   if(CACHE.settings?.[key]) return CACHE.settings[key];
-  // Fall back to class registry teacher
   return getTeacherForClass(clsName);
 }
 
 function switchCampus(campus){
   ACTIVE_CAMPUS = campus;
   localStorage.setItem('mses_campus', campus);
-  // Update switcher buttons
   document.getElementById('btn-campus-kawoko').classList.toggle('active', campus === 'kawoko');
   document.getElementById('btn-campus-ndejje').classList.toggle('active', campus === 'ndejje');
-  // Update topbar subtitle
   const sub = document.getElementById('topbar-sub');
-  if(sub) sub.textContent =
-    'Morning Star Education Services · ' + CAMPUS_CONFIG[campus].label;
-  // Update sidebar brand subtitle
+  if(sub) sub.textContent = 'Morning Star Education Services · ' + CAMPUS_CONFIG[campus].label;
   const brandSub = document.querySelector('.brand-sub');
   if(brandSub) brandSub.textContent = CAMPUS_CONFIG[campus].label;
-  // Re-render anything campus-sensitive
   renderDashboard();
   renderStudentsTable();
   renderScoresPage();
-  if(document.getElementById('page-reports').classList.contains('active'))
-    renderReportCard();
+  if(document.getElementById('page-reports').classList.contains('active')) renderReportCard();
   showAlert('Switched to ' + CAMPUS_CONFIG[campus].label, 'info', 2000);
 }
 
@@ -1298,7 +1328,6 @@ function isHeadTeacher(){ return getRole() === 'headteacher'; }
 function isTeacher(){ return getRole() === 'teacher'; }
 function isDataEntry(){ return getRole() === 'dataentry'; }
 function canEdit(){ return isAdmin(); }
-// Data entry can access import, reports, paycodes, students, scores
 function canDataEntry(){ return isAdmin() || isDataEntry(); }
 
 function applyRoleUI(){
@@ -1319,31 +1348,18 @@ function applyRoleUI(){
     if(el.textContent.trim() === 'Tools'){
       const section = el.closest('.sidebar-section');
       if(section){
-        const visibleItems = [...section.querySelectorAll('.nav-item')]
-          .filter(n => n.style.display !== 'none');
+        const visibleItems = [...section.querySelectorAll('.nav-item')].filter(n => n.style.display !== 'none');
         el.style.display = visibleItems.length ? '' : 'none';
       }
     }
   });
-  // Import Excel topbar button — visible to admin and dataentry
   const importBtn = document.querySelector('.topbar-actions .btn-sm');
   if(importBtn) importBtn.style.display = canDataEntry() ? '' : 'none';
-
-  // Delete buttons — hidden from dataentry
-  document.querySelectorAll('.btn-danger').forEach(btn => {
-    if(btn.textContent.trim() === 'Del' || btn.onclick?.toString().includes('deleteStudent')){
-      btn.style.display = isAdmin() ? '' : 'none';
-    }
-  });
-
-  // Role badge in sidebar footer
   const lbl = document.getElementById('sidebar-user-email');
   if(lbl && SESSION){
     const roleLabels = {admin:'Admin', headteacher:'Head Teacher', teacher:'Teacher', dataentry:'Data Entry'};
     lbl.textContent = SESSION.name + ' · ' + (roleLabels[SESSION.role] || SESSION.role);
   }
-
-  // Teacher class restriction
   if(isTeacher() && SESSION?.assigned_class){
     const cls = SESSION.assigned_class;
     ['student-class-filter','rep-class','bulk-class','scores-class-filter'].forEach(id => {
@@ -1356,14 +1372,10 @@ function applyRoleUI(){
     renderScoresPage();
     populateReportDropdown();
   }
-
-  // Dataentry campus restriction — locked to their assigned campus
   if(isDataEntry() && SESSION?.assigned_class){
-    // assigned_class for dataentry stores the campus e.g. 'kawoko' or 'ndejje'
     const campus = SESSION.assigned_class;
     if(campus === 'kawoko' || campus === 'ndejje'){
       switchCampus(campus);
-      // Hide campus switcher — dataentry can't change campus
       const switcher = document.getElementById('campus-switcher');
       if(switcher) switcher.style.display = 'none';
     }
@@ -1403,10 +1415,7 @@ async function refreshSession(){
     localStorage.setItem('mses_sb_token', SB_TOKEN);
     if(data.refresh_token) localStorage.setItem('mses_sb_refresh', data.refresh_token);
     return true;
-  } catch(e){
-    doLogout();
-    return false;
-  }
+  } catch(e){ doLogout(); return false; }
 }
 
 async function sbFetch(url, options){
@@ -1522,8 +1531,7 @@ async function doLogin(){
 }
 
 function doLogout(){
-  SB_TOKEN = null;
-  SESSION  = null;
+  SB_TOKEN = null; SESSION = null;
   localStorage.removeItem('mses_sb_token');
   localStorage.removeItem('mses_sb_email');
   localStorage.removeItem('mses_sb_refresh');
@@ -1539,7 +1547,6 @@ function showApp(email){
   document.getElementById('app-shell').style.display = 'flex';
   const el = document.getElementById('sidebar-user-email');
   if(el) el.textContent = email || localStorage.getItem('mses_sb_email') || '';
-  // Apply saved campus
   const campus = ACTIVE_CAMPUS;
   document.getElementById('btn-campus-kawoko').classList.toggle('active', campus === 'kawoko');
   document.getElementById('btn-campus-ndejje').classList.toggle('active', campus === 'ndejje');
@@ -1549,14 +1556,8 @@ function showApp(email){
   if(brandSub) brandSub.textContent = CAMPUS_CONFIG[campus].label;
 }
 
-// ── Cache ─────────────────────────────────────────────────────────────────────
-let CACHE = {
-  students:  [],
-  classes:   [],
-  settings:  {},
-  importLog: [],
-  scores:    {},
-};
+// ── Cache ──────────────────────────────────────────────────────────────────────
+let CACHE = { students:[], classes:[], settings:{}, importLog:[], scores:{} };
 
 const DB = new Proxy({}, {
   get(_, prop){
@@ -1606,7 +1607,7 @@ async function loadAll(){
   }
 }
 
-// ── Score helpers ─────────────────────────────────────────────────────────────
+// ── Score helpers ──────────────────────────────────────────────────────────────
 async function loadScoresForStudent(studentId){
   if(CACHE.scores[studentId] && Object.keys(CACHE.scores[studentId]).length > 0) return;
   const data = await sbGet('scores', `student_id=eq.${studentId}&select=term,year,subject,score`);
@@ -1650,27 +1651,7 @@ function getDivision(aggTotal, numSubjects){
 
 function calcStudentSummary(studentId, term){
   const year2 = document.getElementById('rep-year')?.value || '2026';
-  const sc = getCachedScores(studentId, term, year2);
-  const student = DB.students.find(s => s.id === studentId);
-  if(!student) return null;
-  const subs = getSubjectsForClass(student.cls);
-  let total = 0, aggTotal = 0, count = 0;
-  const subResults = [];
-  subs.forEach(sub => {
-    const v = sc[sub];
-    if(v !== undefined && v !== null && v !== ''){
-      const g = getGrade(Number(v));
-      total += Number(v);
-      aggTotal += getAgg(g.grade);
-      count++;
-      subResults.push({sub, score:Number(v), grade:g.grade, comment:g.comment});
-    } else {
-      subResults.push({sub, score:null, grade:null, comment:null});
-    }
-  });
-  const div = count > 0 ? getDivision(aggTotal, count) : null;
-  const avg = count > 0 ? Math.round(total / count) : null;
-  return {total, aggTotal, count, div, avg, subResults};
+  return calcStudentSummaryForYear(studentId, term, year2);
 }
 
 let currentReportStudentId = null;
@@ -1754,10 +1735,7 @@ function showPage(name, navEl){
   if(name==='paycodes') renderPaycodesTable();
 }
 
-// ══════════════════════════════════════════
-//  MODAL HELPERS
-// ══════════════════════════════════════════
-
+// ── Modal Helpers ──────────────────────────────────────────────────────────────
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m => {
@@ -1785,9 +1763,7 @@ async function deleteStudent(id){
     renderStudentsTable();
     renderDashboard();
     showAlert('Student removed.','info');
-  } catch(e){
-    showAlert('Error: '+e.message,'danger');
-  }
+  } catch(e){ showAlert('Error: '+e.message,'danger'); }
 }
 
 function renderStudentsTable(){
@@ -1802,6 +1778,15 @@ function renderStudentsTable(){
     return campusMatch && (!q || name.includes(q) || (s.paycode||'').includes(q)) && (!cf || s.cls === cf) && yearMatch;
   });
   const tbody = document.getElementById('students-tbody');
+  // Update score column header to match selected term filter
+  const SCORE_COL_LABELS = {
+    bot1:'BOT Term 1', bot2:'BOT Term 2', bot3:'BOT Term 3',
+    midterm1:'Midterm Term 1', midterm2:'Midterm Term 2', midterm3:'Midterm Term 3',
+    end1:'End of Term 1', end2:'End of Term 2', end3:'End of Term 3',
+    bot:'BOT', midterm:'Midterm Total', end:'EOT Total'
+  };
+  const scoreColHeader = document.getElementById('score-col-header');
+  if(scoreColHeader) scoreColHeader.textContent = SCORE_COL_LABELS[tf] || 'Score Total';
   if(!filtered.length){
     tbody.innerHTML = '<tr><td colspan="8" class="text-center" style="padding:40px;color:var(--text-muted)">No students found.</td></tr>';
     return;
@@ -2005,7 +1990,6 @@ function renderScoresPage(){
   }).join('');
 }
 
-
 // ══════════════════════════════════════════
 //  REPORT CARDS
 // ══════════════════════════════════════════
@@ -2062,27 +2046,146 @@ function populateReportDropdown(){
   if(cur){ sel.value = cur; renderReportCard(); }
 }
 
+// ══════════════════════════════════════════
+//  BUILD REPORT HTML  ← KEY CHANGES HERE
+// ══════════════════════════════════════════
+
+/*
+  Report card columns by term:
+
+  END OF TERM:
+    Subject | BOT | MT/30 | EOT/70 | Total | Grade | Comment
+
+  MIDTERM:
+    Subject | BOT | MT/30 | Total | Grade | Comment
+    (Total here = midterm score, shown in context of what came before)
+
+  BOT (Beginning of Term):
+    Subject | BOT | Grade | Comment
+    (standalone assessment, no combined total)
+*/
+
 function buildReportHTML(studentId, term, year){
   year = year || document.getElementById('rep-year')?.value || '2026';
   const student = DB.students.find(s => s.id === studentId);
   if(!student) return '';
-  const summary = calcStudentSummaryForYear(studentId, term, year);
-  const sc = getCachedScores(studentId, term, year);
+
   const subs = getSubjectsForClass(student.cls);
-  const termLabel = {midterm:'MIDTERM REPORT', bot:'BEGINNING OF TERM REPORT', end:'END OF TERM REPORT'}[term];
-  const termNum = {midterm:'I', bot:'I', end:'III'}[term] || 'I';
-  const termPeriod = `Term ${termNum} — ${year}`;
-  const S = DB.settings;
-  const campusLabel   = getCampusLabel()   || 'Kawoko Campus';
-  const campusAddr    = getCampusAddress() || 'Kireka - Kawoko campus off Sentema Road';
-  const campusPhone2  = getCampusPhone2()  || S.phone2 || S.phone || '';
-  const headTeacher   = getHeadTeacher()   || '—';
-  const classTeacher  = getTeacherForClassCampus(student.cls) || student.teacher || '—';
-  const scoredSubs = summary ? summary.subResults.filter(r => r.score !== null) : [];
-  const totalAgg = scoredSubs.reduce((a,r) => a + getAgg(r.grade), 0);
-  const div = summary?.div;
-  const teacherComment = div === 1 ? 'Excellent work, keep aiming higher!' : div === 2 ? 'Good work, keep working hard.' : div === 3 ? 'Promising results, aim higher next term.' : 'Needs more effort; please study harder.';
-  const headComment = 'Promising results, don\'t relax next term.';
+
+  // Parse term type and number: e.g. 'end2' → type='end', num='2'
+  const termMatch = term.match(/^(bot|midterm|end)(\d?)$/);
+  const termType  = termMatch ? termMatch[1] : term;
+  const termNum2  = termMatch ? (termMatch[2] || '') : '';   // '1', '2', '3', or ''
+
+  // Build the sibling term keys for reference columns (same term number)
+  const botKey = 'bot'     + termNum2;
+  const midKey = 'midterm' + termNum2;
+  const endKey = 'end'     + termNum2;
+
+  const scEnd = getCachedScores(studentId, endKey, year);
+  const scMid = getCachedScores(studentId, midKey, year);
+  const scBot = getCachedScores(studentId, botKey, year);
+
+  // Primary score map (drives grading) depends on selected term
+  const primarySc = termType === 'end' ? scEnd : termType === 'midterm' ? scMid : scBot;
+
+  // Compute summary from PRIMARY scores only
+  let total = 0, aggTotal = 0, scoredCount = 0;
+  const subResults = subs.map(sub => {
+    const v = primarySc[sub];
+    const hasScore = v !== undefined && v !== null && v !== '';
+    const score = hasScore ? Number(v) : null;
+    const g = hasScore ? getGrade(score) : null;
+    if(hasScore){ total += score; aggTotal += getAgg(g.grade); scoredCount++; }
+    return { sub, score, grade: g?.grade||null, comment: g?.comment||null };
+  });
+  const div = scoredCount > 0 ? getDivision(aggTotal, scoredCount) : null;
+  const summary = { total, aggTotal, count: scoredCount, div, subResults };
+
+  // Build report title correctly, e.g. "END OF TERM 2 REPORT", "MIDTERM TERM 1 REPORT"
+  const TERM_TITLES = {
+    end:     n => n ? `END OF TERM ${n} REPORT`         : 'END OF TERM REPORT',
+    midterm: n => n ? `MIDTERM — TERM ${n} REPORT`      : 'MIDTERM REPORT',
+    bot:     n => n ? `BEGINNING OF TERM ${n} REPORT`   : 'BEGINNING OF TERM REPORT',
+  };
+  const termLabel = (TERM_TITLES[termType] || (() => 'REPORT'))(termNum2);
+  const termPeriod = termNum2 ? `Term ${termNum2} — ${year}` : `${year}`;
+  const S            = DB.settings;
+  const campusAddr   = getCampusAddress() || 'Kireka - Kawoko campus off Sentema Road';
+  const campusPhone2 = getCampusPhone2()  || S.phone2 || S.phone || '';
+  const headTeacher  = getHeadTeacher()   || '—';
+  const classTeacher = getTeacherForClassCampus(student.cls) || student.teacher || '—';
+  const totalAgg     = summary.subResults.filter(r => r.score !== null).reduce((a, r) => a + getAgg(r.grade), 0);
+  const teacherComment = div===1?'Excellent work, keep aiming higher!':div===2?'Good work, keep working hard.':div===3?'Promising results, aim higher next term.':'Needs more effort; please study harder.';
+  const headComment    = "Promising results, don't relax next term.";
+
+  // ── Column structure per term type ────────────────────────────────────────
+  // end:     Subject | BOT (ref) | MT/30 (ref) | EOT/70 | Total | Grade | Comment
+  // midterm: Subject | BOT (ref) | MT/30       | Total  | Grade | Comment
+  // bot:     Subject | BOT Score | Total        | Grade | Comment
+
+  const isEnd = termType === 'end';
+  const isMid = termType === 'midterm';
+  const isBot = termType === 'bot';
+
+  // Format a reference (greyed) vs primary score cell value
+  function fmtRef(v){
+    if(v === undefined || v === null || v === '') return `<span style="color:#bbb">—</span>`;
+    return `<span style="color:#999;font-size:11px">${Number(v)}</span>`;
+  }
+  function fmtPrimary(v){
+    if(v === undefined || v === null || v === '') return '<span style="color:#bbb">—</span>';
+    return `<strong>${Number(v)}</strong>`;
+  }
+
+  // Header columns
+  let theadCols = `<th style="text-align:left">Subject</th>`;
+  if(isEnd || isMid) theadCols += `<th style="text-align:center;opacity:.6;font-size:10px">BOT</th>`;
+  if(isEnd)          theadCols += `<th style="text-align:center;opacity:.7">MT/30</th>`;
+  if(isMid)          theadCols += `<th style="text-align:center">MT/30</th>`;
+  if(isBot)          theadCols += `<th style="text-align:center">BOT Score</th>`;
+  if(isEnd)          theadCols += `<th style="text-align:center">EOT/70</th>`;
+  theadCols += `<th style="text-align:center">Total</th><th style="text-align:center">Grade</th><th>Comment</th>`;
+
+  // Body rows
+  const bodyRows = summary.subResults.map(r => {
+    const botVal = scBot[r.sub];
+    const midVal = scMid[r.sub];
+    const eotVal = scEnd[r.sub];
+    let cols = `<td>${r.sub}</td>`;
+    if(isEnd || isMid) cols += `<td style="text-align:center">${fmtRef(botVal)}</td>`;
+    if(isEnd)          cols += `<td style="text-align:center">${fmtRef(midVal)}</td>`;
+    if(isMid)          cols += `<td style="text-align:center">${fmtPrimary(midVal)}</td>`;
+    if(isBot)          cols += `<td style="text-align:center">${fmtPrimary(botVal)}</td>`;
+    if(isEnd)          cols += `<td style="text-align:center">${fmtPrimary(eotVal)}</td>`;
+    cols += `<td style="text-align:center;font-weight:700">${r.score !== null ? r.score : '—'}</td>`;
+    cols += `<td style="text-align:center">${r.grade || '—'}</td>`;
+    cols += `<td style="font-size:11px">${r.comment || '—'}</td>`;
+    return `<tr>${cols}</tr>`;
+  }).join('');
+
+  // Footer: reference cols + EOT/primary col + total + agg + div + comment
+  // ref cols count: end→2, mid→1, bot→0
+  const refCols = isEnd ? 2 : isMid ? 1 : 0;
+  // primary score col: 1 always
+  const footerEmptyCols = refCols; // these are blank in footer
+
+  const footerRow = `<tr>
+    <td><strong>TOTAL</strong></td>
+    ${footerEmptyCols > 0 ? `<td colspan="${footerEmptyCols}"></td>` : ''}
+    <td></td>
+    <td style="text-align:center"><strong>${summary.count>0 ? summary.total : '—'}</strong></td>
+    <td style="text-align:center"><strong>${totalAgg||'—'}</strong></td>
+    <td>${div ? `Division ${div}` : '—'}</td>
+    <td></td>
+  </tr>`;
+
+  // Explanatory note below table
+  const colNote = isEnd
+    ? 'BOT = reference only &nbsp;|&nbsp; MT/30 = Midterm out of 30% &nbsp;|&nbsp; EOT/70 = End of Term out of 70% &nbsp;|&nbsp; Total = EOT score (grade &amp; division based on EOT)'
+    : isMid
+    ? 'BOT = reference only &nbsp;|&nbsp; MT/30 = Midterm out of 30% &nbsp;|&nbsp; Total = Midterm score (grade &amp; division based on Midterm)'
+    : 'BOT = Beginning of Term assessment';
 
   return `<div class="report-paper">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
@@ -2110,53 +2213,25 @@ function buildReportHTML(studentId, term, year){
       <div class="report-meta-item"><strong>Term</strong>${termPeriod}</div>
     </div>
     <table class="report-table">
-      <thead>
-        <tr>
-          <th>Subject</th>
-          <th style="text-align:center">MT/30</th>
-          <th style="text-align:center">EOT/70</th>
-          <th style="text-align:center">Total</th>
-          <th style="text-align:center">Grade</th>
-          <th>Comment</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${summary ? summary.subResults.map(r => `<tr>
-          <td>${r.sub}</td>
-          <td style="text-align:center">${term==='midterm' && r.score !== null ? r.score : '—'}</td>
-          <td style="text-align:center">${term==='end' && r.score !== null ? r.score : '—'}</td>
-          <td style="text-align:center;font-weight:700">${r.score !== null ? r.score : '—'}</td>
-          <td style="text-align:center">${r.grade || '—'}</td>
-          <td style="font-size:11px">${r.comment || '—'}</td>
-        </tr>`).join('') : ''}
-      </tbody>
-      <tfoot>
-        <tr>
-          <td><strong>TOTAL</strong></td>
-          <td colspan="2"></td>
-          <td style="text-align:center"><strong>${summary && summary.count>0 ? summary.total : '—'}</strong></td>
-          <td style="text-align:center"><strong>${totalAgg||'—'}</strong></td>
-          <td>${div ? `Division ${div}` : '—'}</td>
-        </tr>
-      </tfoot>
+      <thead><tr>${theadCols}</tr></thead>
+      <tbody>${bodyRows}</tbody>
+      <tfoot>${footerRow}</tfoot>
     </table>
     ${(div && term === 'end') ? `<div class="report-promotion">PROMOTED TO ${student.cls.replace('JY','JUNIOR YEAR ').replace('KY','KINDERGARTEN YEAR ')}</div>` : ''}
-    <div style="font-size:11px;margin-bottom:10px">
-      <strong>Note:</strong> Midterm and End of term exams have been assessed out of 30% and 70% respectively to inform the 100%.
-    </div>
+    <div style="font-size:10px;margin-bottom:10px;color:var(--text-light);padding:6px 10px;background:var(--gray-50);border-radius:4px;border-left:3px solid var(--border)">${colNote}</div>
     <div class="grading-key-row">
       ${GRADING_SCALE.map(g => `<span class="gkey">${g.grade}: ${g.min}–${g.max}</span>`).join('')}
     </div>
     <div class="report-footer-grid">
       <div>
-        <div style="font-weight:600;margin-bottom:6px;font-size:12px">Classteacher's comment:</div>
+        <div style="font-weight:600;margin-bottom:6px;font-size:12px">Classteacher\'s comment:</div>
         <div style="font-style:italic;font-size:11px;color:var(--text-muted)">${teacherComment}</div>
         <div class="report-footer-grid" style="margin-top:0;grid-template-columns:1fr">
           <div class="sig-line">CLASS TEACHER: ${classTeacher}</div>
         </div>
       </div>
       <div>
-        <div style="font-weight:600;margin-bottom:6px;font-size:12px">Headteacher's comment:</div>
+        <div style="font-weight:600;margin-bottom:6px;font-size:12px">Headteacher\'s comment:</div>
         <div style="font-style:italic;font-size:11px;color:var(--text-muted)">${headComment}</div>
         <div class="sig-line">HEAD TEACHER: ${headTeacher}</div>
       </div>
@@ -2167,9 +2242,9 @@ function buildReportHTML(studentId, term, year){
   </div>`;
 }
 
-// ── FIX 2: renderReportCard — preserve option value attribute ─────────────────
+// ── renderReportCard ───────────────────────────────────────────────────────────
 async function renderReportCard(){
-  const sid = parseInt(document.getElementById('rep-student')?.value);
+  const sid  = parseInt(document.getElementById('rep-student')?.value);
   const term = document.getElementById('rep-term')?.value || 'midterm';
   const year = document.getElementById('rep-year')?.value || '2026';
   const area = document.getElementById('report-card-area');
@@ -2179,29 +2254,31 @@ async function renderReportCard(){
     return;
   }
   area.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">Loading scores...</div></div>';
-  await loadScoresForStudent(sid);
-  currentReportStudentId = sid;
-  const sc = getCachedScores(sid, term, year);
 
-  // Update year dropdown to highlight which years have data.
-  // FIXED: read and restore the raw value attribute so year lookups never
-  // see stale "2026 ✓" strings in getCachedScores key comparisons.
+  // Load scores for all three terms so buildReportHTML can reference BOT/MT/EOT columns
+  await loadScoresForStudent(sid);
+
+  currentReportStudentId = sid;
+
+  // Check if there are scores for the primary selected term
+  const primarySc = getCachedScores(sid, term, year);
+
+  // Update year dropdown indicators
   const repYearEl2 = document.getElementById('rep-year');
   if(repYearEl2 && sid){
     const studentScores = CACHE.scores[sid] || {};
     [...repYearEl2.options].forEach(opt => {
-      // Always read the raw value attribute — opt.value can carry stale " ✓" text
       const yr = opt.getAttribute('value') || opt.text.replace(' ✓','').trim();
       const hasData = !!studentScores[term+'|'+yr];
       opt.text = yr + (hasData ? ' ✓' : '');
-      opt.setAttribute('value', yr);   // keep attribute clean for future reads
+      opt.setAttribute('value', yr);
     });
   }
 
-  if(!Object.keys(sc).length){
+  if(!Object.keys(primarySc).length){
     area.innerHTML = `<div class="empty-state">
       <div class="empty-icon">📭</div>
-      <div class="empty-text">No scores for ${({midterm:'Midterm',bot:'BOT',end:'End of Term'})[term]} ${year}</div>
+      <div class="empty-text">No scores for ${({bot1:'BOT Term 1',bot2:'BOT Term 2',bot3:'BOT Term 3',midterm1:'Midterm Term 1',midterm2:'Midterm Term 2',midterm3:'Midterm Term 3',end1:'End of Term 1',end2:'End of Term 2',end3:'End of Term 3',bot:'BOT',midterm:'Midterm',end:'End of Term'})[term]||term} ${year}</div>
       <div class="empty-sub">Try a different term or year, or upload scores under Import Scores</div>
     </div>`;
     return;
@@ -2217,11 +2294,12 @@ function openReportFor(sid){
   }, 50);
 }
 
+// ── Print CSS ──────────────────────────────────────────────────────────────────
 const REPORT_PRINT_CSS = `
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',Arial,sans-serif;padding:20px;color:#1a202c;font-size:12px;
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .report-paper{max-width:680px;margin:0 auto;padding:24px;page-break-after:always}
+  .report-paper{max-width:720px;margin:0 auto;padding:24px;page-break-after:always}
   .report-paper:last-child{page-break-after:avoid}
   .report-school-name{font-size:17px;font-weight:800;color:#0d3b6e;text-align:center}
   .report-school-sub{font-size:12px;font-weight:600;color:#0d3b6e;text-align:center}
@@ -2233,10 +2311,10 @@ const REPORT_PRINT_CSS = `
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
   .report-meta-item strong{display:block;font-size:10px;text-transform:uppercase;
     color:#5a6473;letter-spacing:.05em;margin-bottom:2px}
-  .report-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px}
-  .report-table th{background:#0d3b6e!important;color:#fff!important;padding:7px 10px;text-align:left;
-    -webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .report-table td{padding:6px 10px;border-bottom:1px solid #e4e8ed}
+  .report-table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:11px}
+  .report-table th{background:#0d3b6e!important;color:#fff!important;padding:6px 8px;text-align:left;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10px}
+  .report-table td{padding:5px 8px;border-bottom:1px solid #e4e8ed}
   .report-table tr:nth-child(even) td{background:#f8f9fa!important;
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
   .report-table tfoot td{background:#f0f2f5!important;font-weight:700;
@@ -2247,15 +2325,13 @@ const REPORT_PRINT_CSS = `
     letter-spacing:.05em;margin:14px 0;padding:10px;border:2px dashed #c9a84c;border-radius:6px}
   .gkey{display:inline-block;padding:2px 7px;border-radius:4px;background:#f0f2f5!important;
     color:#5a6473;font-size:10px;margin:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .grading-key-row{margin-bottom:14px}
+  .grading-key-row{margin-bottom:10px}
   @media print{
     body{padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .report-paper{padding:10px;max-width:100%}
   }
 `;
 
-// Opens a report in a fully independent Blob URL tab — zero DOM bridge back to MSES,
-// so the parent tab never freezes when the print dialog opens or stays open.
 function openPrintBlob(title, bodyHtml){
   const fullHtml = `<!DOCTYPE html><html>
 <head><meta charset="UTF-8"><title>${title}</title>
@@ -2266,7 +2342,6 @@ function openPrintBlob(title, bodyHtml){
   const url  = URL.createObjectURL(blob);
   const tab  = window.open(url, '_blank');
   if(!tab){ showAlert('Pop-up blocked. Please allow pop-ups for this site.','warning'); }
-  // Release the blob URL after a short delay — the tab has its own copy in memory
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
@@ -2281,9 +2356,7 @@ function printCurrentReport(){
   openPrintBlob(name, html);
 }
 
-
-// ── Bulk print helpers ────────────────────────────────────────────────────────
-
+// ── Bulk print ─────────────────────────────────────────────────────────────────
 function renderBulkStudentList(){
   const cls = document.getElementById('bulk-class').value;
   const listWrap  = document.getElementById('bulk-student-list');
@@ -2330,38 +2403,22 @@ function bulkSelectAll(checked){
 function updateBulkCount(){
   const total    = document.querySelectorAll('.bulk-chk').length;
   const selected = document.querySelectorAll('.bulk-chk:checked').length;
-  document.getElementById('bulk-selected-count').textContent =
-    `${selected} of ${total} selected`;
+  document.getElementById('bulk-selected-count').textContent = `${selected} of ${total} selected`;
 }
 
-// ── printBulkReports — Blob URL (no DOM bridge, no freeze) ───────────────────
 function printBulkReports(){
   const term = document.getElementById('bulk-term').value;
   const year = document.getElementById('bulk-year').value || '2026';
   const checked = [...document.querySelectorAll('.bulk-chk:checked')];
-
-  if(!checked.length){
-    showAlert('Select at least one student.', 'warning');
-    return;
-  }
-
+  if(!checked.length){ showAlert('Select at least one student.', 'warning'); return; }
   const bulkClass = document.getElementById('bulk-class').value;
-
-  // Build all cards — year passed directly, no DOM reads or mutation
   const cards = checked.map(c => buildReportHTML(parseInt(c.value), term, year)).join('');
-
-  // Open as a Blob URL — completely independent tab, zero DOM bridge back to MSES.
-  // This is the key fix: window.open('','_blank') + document.write() keeps a live
-  // parent-child connection that suspends the parent tab's event loop while the
-  // print dialog is open. A Blob URL tab has NO such connection — MSES stays
-  // fully responsive the instant the print tab opens.
-  openPrintBlob(`Bulk Report Cards — ${bulkClass} ${term} ${year}`, cards);
-
-  // Re-enable checkboxes — nothing is frozen, these work immediately
+  const termLabels = {bot1:'BOT Term 1',bot2:'BOT Term 2',bot3:'BOT Term 3',midterm1:'Midterm Term 1',midterm2:'Midterm Term 2',midterm3:'Midterm Term 3',end1:'End of Term 1',end2:'End of Term 2',end3:'End of Term 3'};
+  const termLabel = termLabels[term] || term;
+  openPrintBlob(`Bulk Report Cards — ${bulkClass} ${termLabel} ${year}`, cards);
   document.querySelectorAll('.bulk-chk').forEach(c => c.disabled = false);
   updateBulkCount();
 }
-
 
 // ══════════════════════════════════════════
 //  DASHBOARD
@@ -2435,7 +2492,6 @@ function renderDashboard(){
 // ══════════════════════════════════════════
 
 function buildCampusTeacherFields(){
-  // Build per-campus teacher input rows for each registered class in Settings
   const classes = getAllClassNames().sort();
   ['kawoko','ndejje'].forEach(campus => {
     const container = document.getElementById(campus + '-teacher-fields');
@@ -2466,7 +2522,6 @@ function populateSettingsForm(){
   set('cfg-email',      'email');
   set('cfg-year',       'year');
   set('cfg-next-term',  'nextTermDate');
-  // Per-campus fields
   ['kawoko','ndejje'].forEach(campus => {
     const headEl  = document.getElementById('cfg-head-' + campus);
     const addrEl  = document.getElementById('cfg-addr-' + campus);
@@ -2487,7 +2542,6 @@ async function saveSettings(){
     {key:'year',        value: document.getElementById('cfg-year').value},
     {key:'nextTermDate',value: document.getElementById('cfg-next-term').value},
   ];
-  // Per-campus head teachers, addresses, phones
   ['kawoko','ndejje'].forEach(campus => {
     const headEl  = document.getElementById('cfg-head-' + campus);
     const addrEl  = document.getElementById('cfg-addr-' + campus);
@@ -2495,7 +2549,6 @@ async function saveSettings(){
     if(headEl)  updates.push({key: 'headteacher_' + campus, value: headEl.value.trim()});
     if(addrEl)  updates.push({key: 'address_' + campus,     value: addrEl.value.trim()});
     if(ph2El)   updates.push({key: 'phone2_' + campus,      value: ph2El.value.trim()});
-    // Per-campus class teachers
     classes.forEach(cls => {
       const inp = document.getElementById('cfg-teacher-' + cls.toLowerCase() + '-' + campus);
       if(inp) updates.push({key: 'teacher_' + cls.toLowerCase() + '_' + campus, value: inp.value.trim()});
@@ -2511,10 +2564,7 @@ async function saveSettings(){
 async function exportData(){
   try {
     const [students,classes,settings,scores] = await Promise.all([
-      sbGet('students',''),
-      sbGet('classes',''),
-      sbGet('settings',''),
-      sbGet('scores',''),
+      sbGet('students',''), sbGet('classes',''), sbGet('settings',''), sbGet('scores',''),
     ]);
     const blob = new Blob([JSON.stringify({students,classes,settings,scores},null,2)],{type:'application/json'});
     const a = document.createElement('a');
@@ -2693,8 +2743,8 @@ function refreshClassDropdowns(){
   }
   const sClass = document.getElementById('s-class');
   if(sClass){
-    const kinder = names.filter(n=>getClassDef(n)?.type==='kinder');
-    const junior = names.filter(n=>getClassDef(n)?.type==='junior');
+    const kinder  = names.filter(n=>getClassDef(n)?.type==='kinder');
+    const junior  = names.filter(n=>getClassDef(n)?.type==='junior');
     const primary = names.filter(n=>getClassDef(n)?.type==='primary');
     const other   = names.filter(n=>!['kinder','junior','primary'].includes(getClassDef(n)?.type));
     let html = '<option value="">-- Select class --</option>';
@@ -2763,7 +2813,6 @@ function renderClassesPage(){
   }
 }
 
-
 // ══════════════════════════════════════════
 //  EXCEL IMPORT ENGINE (SheetJS)
 // ══════════════════════════════════════════
@@ -2794,8 +2843,6 @@ function getSubjMap(){
   });
   return map;
 }
-
-const SUBJ_MAP = SUBJ_MAP_BASE;
 
 let impParsedClasses = [];
 
@@ -2830,8 +2877,7 @@ function impReset(){
 
 function impProcessFile(file){
   if(typeof XLSX === 'undefined'){
-    showAlert('SheetJS not loaded. Check your internet connection.','danger');
-    return;
+    showAlert('SheetJS not loaded. Check your internet connection.','danger'); return;
   }
   impSetProgress(10, 'Reading file...');
   const reader = new FileReader();
@@ -2879,9 +2925,7 @@ function impParseSheet(rows){
     if(!row || row.every(v => v === null)) continue;
     const first = row[0] !== null ? String(row[0]).trim() : '';
     const registeredNames = (CACHE.classes || []).map(c => c.name);
-    const matchedCls = registeredNames.find(n =>
-      first.toUpperCase().startsWith(n.toUpperCase())
-    );
+    const matchedCls = registeredNames.find(n => first.toUpperCase().startsWith(n.toUpperCase()));
     if(matchedCls){
       if(currentCls && students.length > 0)
         classes.push({cls: currentCls, subjects: subjectCols.map(s=>s.name), students});
@@ -2895,9 +2939,7 @@ function impParseSheet(rows){
       for(let c = 0; c < row.length; c++){
         const v = row[c] !== null ? String(row[c]).trim().toUpperCase() : '';
         const subjMap = getSubjMap();
-        if(subjMap[v]){
-          subjectCols.push({col: c, name: subjMap[v]});
-        }
+        if(subjMap[v]) subjectCols.push({col: c, name: subjMap[v]});
       }
       continue;
     }
@@ -2909,13 +2951,9 @@ function impParseSheet(rows){
       const scores = {};
       subjectCols.forEach(({col, name}) => {
         const v = row[col];
-        if(v !== null && v !== '' && !isNaN(parseFloat(v))){
-          scores[name] = parseFloat(v);
-        }
+        if(v !== null && v !== '' && !isNaN(parseFloat(v))) scores[name] = parseFloat(v);
       });
-      if(Object.keys(scores).length > 0){
-        students.push({fname: firstname, lname: surname, scores});
-      }
+      if(Object.keys(scores).length > 0) students.push({fname: firstname, lname: surname, scores});
     }
   }
   if(currentCls && students.length > 0)
@@ -2931,9 +2969,7 @@ function impBuildPreview(){
   impParsedClasses.forEach(cls => {
     let newCount = 0, updateCount = 0;
     cls.students.forEach(s => {
-      const existing = DB.students.find(e =>
-        e.cls === cls.cls && e.lname === s.lname && e.fname === s.fname
-      );
+      const existing = DB.students.find(e => e.cls === cls.cls && e.lname === s.lname && e.fname === s.fname);
       if(existing) updateCount++;
       else newCount++;
     });
@@ -2977,32 +3013,30 @@ function impBuildPreview(){
     </div>`;
   });
   area.innerHTML = html;
-  const act = document.getElementById('imp-actions');
-  act.style.display = 'flex';
+  document.getElementById('imp-actions').style.display = 'flex';
 }
 
 async function impConfirm(){
   const term          = document.getElementById('imp-term').value;
   const year          = document.getElementById('imp-year').value || '2026';
   const teacherOverride = document.getElementById('imp-teacher')?.value?.trim() || '';
-  const TERM_STORE    = {
-    midterm:'midterm', midterm2:'midterm', midterm3:'midterm',
-    bot:'bot', end:'end', end1:'end', end2:'end', end3:'end'
-  };
+  // term values are now specific: bot1/bot2/bot3, midterm1/2/3, end1/2/3
   const IMP_TERM_LABELS = {
-    midterm:'Midterm', bot:'BOT',
-    end:'End of Term', end1:'End of Term 1', end2:'End of Term 2', end3:'End of Term 3'
+    bot1:'BOT Term 1',   bot2:'BOT Term 2',   bot3:'BOT Term 3',
+    midterm1:'Midterm Term 1', midterm2:'Midterm Term 2', midterm3:'Midterm Term 3',
+    end1:'End of Term 1', end2:'End of Term 2', end3:'End of Term 3',
+    // legacy fallbacks
+    bot:'BOT', midterm:'Midterm', end:'End of Term'
   };
-  const termStore  = TERM_STORE[term] || term;
+  const termStore  = term; // store exactly as selected
   const termLabel  = IMP_TERM_LABELS[term] || term;
-  const campus     = ACTIVE_CAMPUS;   // which campus is currently selected
+  const campus     = ACTIVE_CAMPUS;
   let totalNew = 0, totalUpd = 0;
   try {
     const freshStudents = await sbGet('students', 'order=id');
     CACHE.students = freshStudents || [];
     const lookup = {};
     CACHE.students.forEach(st => {
-      // Key includes campus so Kawoko JY1 and Ndejje JY1 are never confused
       const key = `${st.fname.trim().toUpperCase()}|${st.lname.trim().toUpperCase()}|${st.cls}|${st.campus||'kawoko'}`;
       lookup[key] = st;
     });
@@ -3017,11 +3051,7 @@ async function impConfirm(){
         const ln  = s.lname.trim().toUpperCase();
         const key = `${fn}|${ln}|${cls.cls}|${campus}`;
         if(!lookup[key]){
-          toInsert.push({
-            fname: fn, lname: ln, cls: cls.cls,
-            campus,                              // ← tag every new student with campus
-            paycode: '', teacher: clsTeacher, year, notes: ''
-          });
+          toInsert.push({fname: fn, lname: ln, cls: cls.cls, campus, paycode: '', teacher: clsTeacher, year, notes: ''});
         }
         toScore.push({fname: fn, lname: ln, scores: s.scores});
       }
@@ -3034,8 +3064,7 @@ async function impConfirm(){
             const key = `${r.fname.trim().toUpperCase()}|${r.lname.trim().toUpperCase()}|${r.cls}|${r.campus||campus}`;
             lookup[key] = r;
             CACHE.students.push(r);
-            clsNew++;
-            totalNew++;
+            clsNew++; totalNew++;
           });
         }
       }
@@ -3044,17 +3073,9 @@ async function impConfirm(){
         const key = `${s.fname}|${s.lname}|${cls.cls}|${campus}`;
         const student = lookup[key];
         if(!student){ continue; }
-        if(!lookup[key+'__counted']){
-          clsUpd++;
-          totalUpd++;
-          lookup[key+'__counted'] = true;
-        }
+        if(!lookup[key+'__counted']){ clsUpd++; totalUpd++; lookup[key+'__counted'] = true; }
         Object.entries(s.scores).forEach(([subject, score]) => {
-          scoreRows.push({
-            student_id: student.id,
-            term: termStore, year, subject,
-            score: parseFloat(score)
-          });
+          scoreRows.push({student_id: student.id, term: termStore, year, subject, score: parseFloat(score)});
         });
       }
       if(scoreRows.length > 0){
@@ -3070,7 +3091,7 @@ async function impConfirm(){
       }
       await sbInsert('import_log', {
         cls: cls.cls, term: termStore, term_label: termLabel,
-        year, campus,                            // ← log which campus this import was for
+        year, campus,
         students: cls.students.length,
         new_count: clsNew, update_count: clsUpd - clsNew
       });
@@ -3094,12 +3115,9 @@ async function impConfirm(){
   renderImportLog();
 }
 
-
 // ══════════════════════════════════════════
 //  TEMPLATE DOWNLOAD
 // ══════════════════════════════════════════
-
-const TEMPLATE_B64 = "UEsDBBQAAAAIAKtKmlxGx01IlQAAAM0AAAAQAAAAZG9jUHJvcHMvYXBwLnhtbE3PTQvCMAwG4L9SdreZih6kDkQ9ip68zy51hbYpbYT67+0EP255ecgboi6JIia2mEXxLuRtMzLHDUDWI/o+y8qhiqHke64x3YGMsRoPpB8eA8OibdeAhTEMOMzit7Dp1C5GZ3XPlkJ3sjpRJsPiWDQ6sScfq9wcChDneiU+ixNLOZcrBf+LU8sVU57mym/8ZAW/B7oXUEsDBBQAAAAIAKtKmlxOYcdT8QAAACsCAAARAAAAAAAAAAAAAACAAcMAAABkb2NQcm9wcy9jb3JlLnhtbFBLAQIUAxQAAAAIAKtKmlyZXJwjEAYAAJwnAAATAAAAAAAAAAAAAACAAeMBAAB4bC90aGVtZS90aGVtZTEueG1sUEsBAhQDFAAAAAgAq0qaXIeJxHN3BgAApB0AABgAAAAAAAAAAAAAAICBJAgAAHhsL3dvcmtzaGVldHMvc2hlZXQxLnhtbFBLAQIUAxQAAAAIAKtKmlwTm65PlQsAAAxPAAAYAAAAAAAAAAAAAACAgdEOAAB4bC93b3Jrc2hlZXRzL3NoZWV0Mi54bWxQSwUGAAAAABIAEgC1BAAAwIIAAAAA";
 
 const TERM_LABELS = {
   midterm:  'MID TERM ONE',
@@ -3115,9 +3133,7 @@ const ALL_CLASSES = ['JY1','JY2','JY3','JY4','JY5','JY6','KY1','KY2','KY3'];
 
 function openTemplateModal(){
   const box = document.getElementById('tmpl-class-checkboxes');
-  const names = CACHE.classes.length > 0
-    ? CACHE.classes.map(c => c.name).sort()
-    : ALL_CLASSES;
+  const names = CACHE.classes.length > 0 ? CACHE.classes.map(c => c.name).sort() : ALL_CLASSES;
   box.innerHTML = names.map(c => `
     <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;
       background:var(--gray-50);border:1px solid var(--border);border-radius:var(--radius);
@@ -3283,9 +3299,7 @@ async function doStaffLogin(){
       headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON }
     });
     const rows = await r.json();
-    if(!rows.length || rows[0].pin_hash !== pinHash){
-      throw new Error('Invalid username or PIN.');
-    }
+    if(!rows.length || rows[0].pin_hash !== pinHash) throw new Error('Invalid username or PIN.');
     const user = rows[0];
     SESSION = { id: user.id, name: user.name, username: user.username, role: user.role, assigned_class: user.assigned_class };
     localStorage.setItem('mses_session', JSON.stringify(SESSION));
@@ -3342,19 +3356,13 @@ async function renderUsersPage(){
 function toggleClassField(){
   const role = document.getElementById('u-role').value;
   const wrap  = document.getElementById('u-class-wrap');
-  const label = wrap?.querySelector('label');
+  const label = document.getElementById('u-class-label');
   wrap.style.display = (role === 'teacher' || role === 'dataentry') ? '' : 'none';
-  if(label){
-    label.textContent = role === 'dataentry' ? 'Campus Access' : 'Assigned Class';
-  }
-  // For dataentry, replace class options with campus options
+  if(label) label.textContent = role === 'dataentry' ? 'Campus Access' : 'Assigned Class';
   const sel = document.getElementById('u-class');
   if(role === 'dataentry'){
-    sel.innerHTML = `
-      <option value="kawoko">Kawoko Campus</option>
-      <option value="ndejje">Ndejje Campus</option>`;
+    sel.innerHTML = `<option value="kawoko">Kawoko Campus</option><option value="ndejje">Ndejje Campus</option>`;
   } else {
-    // Restore class options
     refreshClassDropdowns();
   }
 }
@@ -3378,7 +3386,7 @@ function openEditUser(u){
 async function saveUser(){
   const errEl  = document.getElementById('user-form-error');
   errEl.style.display = 'none';
-  const editId = document.getElementById('edit-user-id').value;
+  const editId   = document.getElementById('edit-user-id').value;
   const name     = document.getElementById('u-name').value.trim();
   const username = document.getElementById('u-username').value.trim().toLowerCase();
   const role     = document.getElementById('u-role').value;
@@ -3394,11 +3402,8 @@ async function saveUser(){
   try {
     const record = { name, username, role, assigned_class: cls, active: true };
     if(pin) record.pin_hash = await hashPin(pin);
-    if(editId){
-      await sbPatch('app_users', `id=eq.${editId}`, record);
-    } else {
-      await sbPost('app_users', record);
-    }
+    if(editId){ await sbPatch('app_users', `id=eq.${editId}`, record); }
+    else { await sbPost('app_users', record); }
     closeModal('modal-add-user');
     showAlert(`Account ${editId ? 'updated' : 'created'} successfully.`);
     renderUsersPage();
@@ -3408,9 +3413,7 @@ async function saveUser(){
     ['u-name','u-username','u-pin','u-pin-confirm'].forEach(id => document.getElementById(id).value='');
     document.getElementById('u-role').value = 'teacher';
     toggleClassField();
-  } catch(e){
-    errEl.textContent = e.message; errEl.style.display = 'block';
-  }
+  } catch(e){ errEl.textContent = e.message; errEl.style.display = 'block'; }
   btn.textContent = 'Save Account'; btn.disabled = false;
 }
 
@@ -3481,8 +3484,7 @@ function renderPromotionList(){
   emptyMsg.style.display = 'none';
   listWrap.style.display = 'block';
   btn.disabled = false;
-  document.getElementById('promo-list-title').textContent =
-    `${fromCls} — ${students.length} student${students.length!==1?'s':''}`;
+  document.getElementById('promo-list-title').textContent = `${fromCls} — ${students.length} student${students.length!==1?'s':''}`;
   const classOptions = CACHE.classes.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
   document.getElementById('promo-tbody').innerHTML = students.map((s,i) => `
     <tr id="promo-row-${s.id}">
@@ -3498,9 +3500,7 @@ function renderPromotionList(){
       </td>
       <td id="promo-status-${s.id}" style="font-size:12px;color:var(--text-muted)">Pending</td>
     </tr>`).join('');
-  document.querySelectorAll('.promo-dest').forEach(sel => {
-    sel.value = toEl.value || '';
-  });
+  document.querySelectorAll('.promo-dest').forEach(sel => { sel.value = toEl.value || ''; });
   document.getElementById('promo-to').onchange = function(){
     document.querySelectorAll('.promo-dest').forEach(sel => sel.value = this.value);
   };
@@ -3572,19 +3572,12 @@ function renderPaycodesTable(){
   if(!tbody) return;
   let students = [...CACHE.students]
     .filter(s => (s.campus||'kawoko') === ACTIVE_CAMPUS)
-    .sort((a,b) => {
-    if(a.cls < b.cls) return -1; if(a.cls > b.cls) return 1;
-    return a.lname.localeCompare(b.lname);
-  });
+    .sort((a,b) => { if(a.cls < b.cls) return -1; if(a.cls > b.cls) return 1; return a.lname.localeCompare(b.lname); });
   if(cls)     students = students.filter(s => s.cls === cls);
   if(missing) students = students.filter(s => !s.paycode || !s.paycode.trim());
-  if(q)       students = students.filter(s =>
-    (s.fname+' '+s.lname).toLowerCase().includes(q) ||
-    (s.paycode||'').toLowerCase().includes(q)
-  );
+  if(q)       students = students.filter(s => (s.fname+' '+s.lname).toLowerCase().includes(q) || (s.paycode||'').toLowerCase().includes(q));
   const missing_count = CACHE.students.filter(s => !s.paycode || !s.paycode.trim()).length;
-  if(countEl) countEl.textContent =
-    `${students.length} shown · ${missing_count} missing code${missing_count!==1?'s':''}`;
+  if(countEl) countEl.textContent = `${students.length} shown · ${missing_count} missing code${missing_count!==1?'s':''}`;
   if(!students.length){
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:36px;color:var(--text-muted)">
       ${missing ? 'All students have payment codes! 🎉' : 'No students found.'}</td></tr>`;
@@ -3600,13 +3593,10 @@ function renderPaycodesTable(){
         <div id="pc-display-${s.id}" style="display:flex;align-items:center;gap:8px">
           <span style="font-family:monospace;font-size:13px;color:${hasCode?'var(--text)':'var(--text-light)'};
             font-style:${hasCode?'normal':'italic'}">${hasCode ? s.paycode : 'not set'}</span>
-          <button class="btn btn-xs" onclick="startEditPaycode(${s.id})"
-            style="opacity:0.5" title="Edit">✏️</button>
+          <button class="btn btn-xs" onclick="startEditPaycode(${s.id})" style="opacity:0.5" title="Edit">✏️</button>
         </div>
         <div id="pc-edit-${s.id}" style="display:none;align-items:center;gap:6px">
-          <input type="text" id="pc-input-${s.id}"
-            value="${s.paycode||''}"
-            placeholder="Enter code"
+          <input type="text" id="pc-input-${s.id}" value="${s.paycode||''}" placeholder="Enter code"
             style="padding:5px 9px;font-size:13px;font-family:monospace;border:1px solid var(--border-focus);
               border-radius:var(--radius);width:160px;outline:none"
             onkeydown="if(event.key==='Enter'){savePaycode(${s.id});event.preventDefault()}
@@ -3630,8 +3620,7 @@ function startEditPaycode(id){
   const editDiv = document.getElementById('pc-edit-'+id);
   editDiv.style.display = 'flex';
   const inp = document.getElementById('pc-input-'+id);
-  inp.focus();
-  inp.select();
+  inp.focus(); inp.select();
 }
 
 function cancelEditPaycode(id){
@@ -3651,10 +3640,7 @@ async function savePaycode(id){
     student.paycode = newCode;
     renderPaycodesTable();
     showAlert(`Code saved for ${student.fname} ${student.lname}.`, 'success', 2000);
-  } catch(e){
-    showAlert('Failed to save: '+e.message, 'danger');
-    cancelEditPaycode(id);
-  }
+  } catch(e){ showAlert('Failed to save: '+e.message, 'danger'); cancelEditPaycode(id); }
 }
 
 function downloadPaycodes(mode){
@@ -3662,16 +3648,10 @@ function downloadPaycodes(mode){
   const cls = document.getElementById('pc-class')?.value || '';
   let students = [...CACHE.students]
     .filter(s => (s.campus||'kawoko') === ACTIVE_CAMPUS)
-    .sort((a,b) => {
-    if(a.cls < b.cls) return -1; if(a.cls > b.cls) return 1;
-    return a.lname.localeCompare(b.lname);
-  });
+    .sort((a,b) => { if(a.cls < b.cls) return -1; if(a.cls > b.cls) return 1; return a.lname.localeCompare(b.lname); });
   if(cls) students = students.filter(s => s.cls === cls);
   if(mode === 'missing') students = students.filter(s => !s.paycode || !s.paycode.trim());
-  if(!students.length){
-    showAlert(mode === 'missing' ? 'No students with missing codes!' : 'No students found.', 'info');
-    return;
-  }
+  if(!students.length){ showAlert(mode === 'missing' ? 'No students with missing codes!' : 'No students found.', 'info'); return; }
   const rows = [['NO', 'CLASS', 'SURNAME', 'FIRSTNAME', 'PAYMENT CODE']];
   students.forEach((s, i) => { rows.push([i+1, s.cls, s.lname, s.fname, s.paycode||'']); });
   const ws = XLSX.utils.aoa_to_sheet(rows);
@@ -3699,11 +3679,10 @@ function uploadPaycodes(event){
         const cells = rows[r].map(v => String(v).trim().toUpperCase());
         const cIdx = cells.findIndex(v => v === 'PAYMENT CODE' || v === 'PAYCODE' || v === 'CODE');
         if(cIdx >= 0){
-          headerRow   = r;
-          codeCol     = cIdx;
-          surnameCol  = cells.findIndex(v => v === 'SURNAME' || v === 'LAST NAME' || v === 'LNAME');
-          firstnameCol= cells.findIndex(v => v === 'FIRSTNAME' || v === 'FIRST NAME' || v === 'FNAME');
-          clsCol      = cells.findIndex(v => v === 'CLASS' || v === 'CLS');
+          headerRow = r; codeCol = cIdx;
+          surnameCol   = cells.findIndex(v => v === 'SURNAME' || v === 'LAST NAME' || v === 'LNAME');
+          firstnameCol = cells.findIndex(v => v === 'FIRSTNAME' || v === 'FIRST NAME' || v === 'FNAME');
+          clsCol       = cells.findIndex(v => v === 'CLASS' || v === 'CLS');
           break;
         }
       }
@@ -3751,7 +3730,7 @@ function uploadPaycodes(event){
   event.target.value = '';
 }
 
-// Legacy stubs kept for compatibility
+// Legacy stubs
 function handleDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
 function handleDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
 function handleDrop(e){ e.preventDefault(); e.currentTarget.classList.remove('drag-over'); }
