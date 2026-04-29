@@ -660,6 +660,11 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             </optgroup>
           </select>
         </div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+          <button class="btn" style="font-size:12px;padding:6px 14px;background:var(--white);border:1px solid var(--border)" onclick="reloadAndRenderStudents()">
+            🔄 Refresh Scores
+          </button>
+        </div>
         <div id="merge-alert-bar" style="display:none;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:var(--radius);padding:12px 18px;margin-bottom:12px;align-items:center;gap:12px;flex-wrap:wrap">
           <span style="font-weight:700;color:#b45309">⚠ <span id="merge-dup-count">0</span> possible duplicate students found</span>
           <button class="btn" style="background:#f59e0b;color:#fff;border:none;font-size:12px;padding:6px 14px" onclick="openMergeTool()">🔀 Review & Merge Duplicates</button>
@@ -1674,8 +1679,8 @@ async function loadAll(){
 }
 
 // ── Score helpers ──────────────────────────────────────────────────────────────
-async function loadScoresForStudent(studentId){
-  if(CACHE.scores[studentId] && Object.keys(CACHE.scores[studentId]).length > 0) return;
+async function loadScoresForStudent(studentId, force){
+  if(!force && CACHE.scores[studentId] && Object.keys(CACHE.scores[studentId]).length > 0) return;
   const data = await sbGet('scores', `student_id=eq.${studentId}&select=term,year,subject,score`);
   const byTerm = {};
   (data||[]).forEach(r => {
@@ -1932,12 +1937,16 @@ function checkAndShowMergeAlert(){
   }
 }
 
-function openMergeTool(){
+async function openMergeTool(){
   const modal = document.getElementById('merge-modal');
   if(!modal){ console.error('merge-modal not found'); return; }
   modal.style.display = 'flex';
+  const list = document.getElementById('merge-pairs-list');
+  list.innerHTML = '<div style="text-align:center;padding:30px;color:#666">Loading scores...</div>';
+  // Load scores for all campus students so score counts are accurate
+  const campusStudents = DB.students.filter(s => (s.campus||'kawoko') === ACTIVE_CAMPUS);
+  await Promise.all(campusStudents.map(s => loadScoresForStudent(s.id, true)));
   const pairs = findDuplicatePairs();
-  const list  = document.getElementById('merge-pairs-list');
   if(!pairs.length){
     list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted)">✅ No duplicates found</div>';
   } else {
@@ -2030,6 +2039,21 @@ async function deleteStudent(id){
     renderDashboard();
     showAlert('Student removed.','info');
   } catch(e){ showAlert('Error: '+e.message,'danger'); }
+}
+
+async function reloadAndRenderStudents(){
+  // Force reload all scores from Supabase then render
+  const freshScores = await sbGet('scores','select=student_id,term,year,subject,score&limit=100000');
+  CACHE.scores = {};
+  (freshScores || []).forEach(r => {
+    if(!CACHE.scores[r.student_id]) CACHE.scores[r.student_id] = {};
+    const k = r.term + '|' + r.year;
+    if(!CACHE.scores[r.student_id][k]) CACHE.scores[r.student_id][k] = {};
+    CACHE.scores[r.student_id][k][r.subject] = r.score;
+  });
+  CACHE.students = await sbGet('students','order=lname&limit=10000');
+  renderStudentsTable();
+  renderDashboard();
 }
 
 function renderStudentsTable(){
@@ -3451,7 +3475,7 @@ async function impConfirm(){
   showAlert(`✅ Import complete: ${totalNew} new students, ${totalUpd} score records saved (${termLabel}).`);
   CACHE.students = await sbGet('students','order=lname');
   // Reload ALL scores into cache so pages reflect the new data immediately
-  const freshScores = await sbGet('scores','select=student_id,term,year,subject,score');
+  const freshScores = await sbGet('scores','select=student_id,term,year,subject,score&limit=100000');
   CACHE.scores = {};
   (freshScores || []).forEach(r => {
     if(!CACHE.scores[r.student_id]) CACHE.scores[r.student_id] = {};
@@ -3459,6 +3483,8 @@ async function impConfirm(){
     if(!CACHE.scores[r.student_id][k]) CACHE.scores[r.student_id][k] = {};
     CACHE.scores[r.student_id][k][r.subject] = r.score;
   });
+  // Also reload students cache
+  CACHE.students = await sbGet('students','order=lname&limit=10000');
   populateScoreStudentDropdown();
   populateReportDropdown();
   renderDashboard();
