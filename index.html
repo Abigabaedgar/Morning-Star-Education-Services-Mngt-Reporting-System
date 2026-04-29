@@ -1509,6 +1509,25 @@ async function sbGet(table, params=''){
   return r.json();
 }
 
+// Paginated fetch — gets ALL rows even if Supabase caps at 1000 per request
+async function sbGetAll(table, params=''){
+  const PAGE = 1000;
+  let all = [], offset = 0;
+  while(true){
+    const sep = params ? '&' : '';
+    const url = `${SUPABASE_URL}/rest/v1/${table}?${params}${sep}offset=${offset}&limit=${PAGE}`;
+    const opts = {headers: sbHeaders({'Range': `${offset}-${offset+PAGE-1}`})};
+    const r = await sbFetch(url, opts);
+    if(!r.ok) break;
+    const rows = await r.json();
+    if(!rows || !rows.length) break;
+    all.push(...rows);
+    if(rows.length < PAGE) break; // last page
+    offset += PAGE;
+  }
+  return all;
+}
+
 async function sbInsert(table, body){
   const url = `${SUPABASE_URL}/rest/v1/${table}`;
   const opts = {method:'POST', headers: sbHeaders(), body: JSON.stringify(body)};
@@ -1647,11 +1666,11 @@ function loadDB(){}
 async function loadAll(){
   try {
     const [students, classes, settings, importLog, allScores] = await Promise.all([
-      sbGet('students','order=lname&limit=10000'),
+      sbGetAll('students','order=lname'),
       sbGet('classes','order=name'),
       sbGet('settings',''),
       sbGet('import_log','order=created_at.desc&limit=100'),
-      sbGet('scores','select=student_id,term,year,subject,score&limit=100000'),
+      sbGetAll('scores','select=student_id,term,year,subject,score'),
     ]);
     CACHE.students = students || [];
     CACHE.classes  = (classes || []).map(c => {
@@ -2043,7 +2062,7 @@ async function deleteStudent(id){
 
 async function reloadAndRenderStudents(){
   // Force reload all scores from Supabase then render
-  const freshScores = await sbGet('scores','select=student_id,term,year,subject,score&limit=100000');
+  const freshScores = await sbGetAll('scores','select=student_id,term,year,subject,score');
   CACHE.scores = {};
   (freshScores || []).forEach(r => {
     if(!CACHE.scores[r.student_id]) CACHE.scores[r.student_id] = {};
@@ -2051,7 +2070,7 @@ async function reloadAndRenderStudents(){
     if(!CACHE.scores[r.student_id][k]) CACHE.scores[r.student_id][k] = {};
     CACHE.scores[r.student_id][k][r.subject] = r.score;
   });
-  CACHE.students = await sbGet('students','order=lname&limit=10000');
+  CACHE.students = await sbGetAll('students','order=lname');
   renderStudentsTable();
   renderDashboard();
 }
@@ -3196,7 +3215,7 @@ function impProcessFile(file){
       wb.SheetNames.forEach(sheetName => {
         const ws = wb.Sheets[sheetName];
         const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
-        const parsed = impParseSheet(rows);
+        const parsed = impParseSheet(rows, sheetName);
         impParsedClasses.push(...parsed);
       });
       impSetProgress(90, 'Building preview...');
@@ -3222,15 +3241,24 @@ function impProcessFile(file){
   reader.readAsArrayBuffer(file);
 }
 
-function impParseSheet(rows){
+function impParseSheet(rows, sheetName){
   const classes = [];
   let currentCls = null, subjectCols = [], students = [];
+  // Also try to detect class from sheet tab name (e.g. "JY7", "KY1")
+  const sheetClsMatch = sheetName ? sheetName.trim().toUpperCase().match(/^(JY[1-9]|KY[1-9]|P[1-7]|S[1-6])/i) : null;
+  const sheetCls = sheetClsMatch ? sheetClsMatch[1].toUpperCase() : null;
+  if(sheetCls && !currentCls) currentCls = sheetCls;
+
   for(let i = 0; i < rows.length; i++){
     const row = rows[i];
     if(!row || row.every(v => v === null)) continue;
     const first = row[0] !== null ? String(row[0]).trim() : '';
     const registeredNames = (CACHE.classes || []).map(c => c.name);
-    const matchedCls = registeredNames.find(n => first.toUpperCase().startsWith(n.toUpperCase()));
+    // Also match standard class patterns even if not in CACHE.classes
+    const stdPattern = /^(JY[1-9]|KY[1-9]|P[1-7]|S[1-6])(\s|$)/i;
+    const stdMatch = first.toUpperCase().match(/^(JY[1-9]|KY[1-9]|P[1-7]|S[1-6])(\s|$)/i);
+    const matchedCls = registeredNames.find(n => first.toUpperCase().startsWith(n.toUpperCase()))
+      || (stdMatch ? stdMatch[1].toUpperCase() : null);
     if(matchedCls){
       if(currentCls && students.length > 0)
         classes.push({cls: currentCls, subjects: subjectCols.map(s=>s.name), students});
@@ -3473,9 +3501,9 @@ async function impConfirm(){
     return;
   }
   showAlert(`✅ Import complete: ${totalNew} new students, ${totalUpd} score records saved (${termLabel}).`);
-  CACHE.students = await sbGet('students','order=lname&limit=10000');
+  CACHE.students = await sbGetAll('students','order=lname');
   // Reload ALL scores into cache so pages reflect the new data immediately
-  const freshScores = await sbGet('scores','select=student_id,term,year,subject,score&limit=100000');
+  const freshScores = await sbGetAll('scores','select=student_id,term,year,subject,score');
   CACHE.scores = {};
   (freshScores || []).forEach(r => {
     if(!CACHE.scores[r.student_id]) CACHE.scores[r.student_id] = {};
@@ -3484,7 +3512,7 @@ async function impConfirm(){
     CACHE.scores[r.student_id][k][r.subject] = r.score;
   });
   // Also reload students cache
-  CACHE.students = await sbGet('students','order=lname&limit=10000');
+  CACHE.students = await sbGetAll('students','order=lname');
   populateScoreStudentDropdown();
   populateReportDropdown();
   renderDashboard();
