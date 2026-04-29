@@ -1503,7 +1503,7 @@ async function sbFetch(url, options){
 
 async function sbGet(table, params=''){
   const url = `${SUPABASE_URL}/rest/v1/${table}?${params}`;
-  const opts = {headers: sbHeaders()};
+  const opts = {headers: sbHeaders({'Range': '0-99999'})};
   const r = await sbFetch(url, opts);
   if(!r.ok){ const e=await r.text(); throw new Error(e); }
   return r.json();
@@ -1647,11 +1647,11 @@ function loadDB(){}
 async function loadAll(){
   try {
     const [students, classes, settings, importLog, allScores] = await Promise.all([
-      sbGet('students','order=lname'),
+      sbGet('students','order=lname&limit=10000'),
       sbGet('classes','order=name'),
       sbGet('settings',''),
       sbGet('import_log','order=created_at.desc&limit=100'),
-      sbGet('scores','select=student_id,term,year,subject,score'),
+      sbGet('scores','select=student_id,term,year,subject,score&limit=100000'),
     ]);
     CACHE.students = students || [];
     CACHE.classes  = (classes || []).map(c => {
@@ -3473,7 +3473,7 @@ async function impConfirm(){
     return;
   }
   showAlert(`✅ Import complete: ${totalNew} new students, ${totalUpd} score records saved (${termLabel}).`);
-  CACHE.students = await sbGet('students','order=lname');
+  CACHE.students = await sbGet('students','order=lname&limit=10000');
   // Reload ALL scores into cache so pages reflect the new data immediately
   const freshScores = await sbGet('scores','select=student_id,term,year,subject,score&limit=100000');
   CACHE.scores = {};
