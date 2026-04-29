@@ -550,7 +550,32 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 
       <!-- ── DASHBOARD ── -->
       <div id="page-dashboard" class="page active">
-        <div class="stats-row">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div style="font-size:13px;color:var(--text-muted)">Showing stats for:</div>
+        <select id="dash-term" onchange="renderDashboard()" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font);background:var(--white)">
+          <optgroup label="Term 1">
+            <option value="bot1">BOT — Term 1</option>
+            <option value="midterm1">Midterm — Term 1</option>
+            <option value="end1">End of Term 1</option>
+          </optgroup>
+          <optgroup label="Term 2">
+            <option value="bot2">BOT — Term 2</option>
+            <option value="midterm2">Midterm — Term 2</option>
+            <option value="end2">End of Term 2</option>
+          </optgroup>
+          <optgroup label="Term 3">
+            <option value="bot3">BOT — Term 3</option>
+            <option value="midterm3">Midterm — Term 3</option>
+            <option value="end3">End of Term 3</option>
+          </optgroup>
+        </select>
+        <select id="dash-year" onchange="renderDashboard()" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font);background:var(--white)">
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+          <option value="2027">2027</option>
+        </select>
+      </div>
+      <div class="stats-row">
           <div class="stat-card">
             <div class="stat-val" id="stat-students">0</div>
             <div class="stat-lbl">Total Students</div>
@@ -581,7 +606,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <div class="card-header">
               <div>
                 <div class="card-title">🏆 Top Performers</div>
-                <div class="card-sub">Midterm · all classes</div>
+                <div class="card-sub" id="dash-top-sub">Midterm · all classes</div>
               </div>
             </div>
             <div id="top-performers-list"></div>
@@ -590,7 +615,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
             <div class="card-header">
               <div>
                 <div class="card-title">📊 Division Breakdown</div>
-                <div class="card-sub">All students · midterm</div>
+                <div class="card-sub" id="dash-div-sub">All students · midterm</div>
               </div>
             </div>
             <div id="division-breakdown"></div>
@@ -634,6 +659,11 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
               <option value="end3">End of Term 3</option>
             </optgroup>
           </select>
+        </div>
+        <div id="merge-alert-bar" style="display:none;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:var(--radius);padding:12px 18px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-weight:700;color:#b45309">⚠ <span id="merge-dup-count">0</span> possible duplicate students found</span>
+          <button class="btn" style="background:#f59e0b;color:#fff;border:none;font-size:12px;padding:6px 14px" onclick="openMergeTool()">🔀 Review & Merge Duplicates</button>
+          <button onclick="document.getElementById('merge-alert-bar').style.display='none'" style="margin-left:auto;background:none;border:none;font-size:18px;cursor:pointer;color:#b45309">×</button>
         </div>
         <div class="card" style="padding:0">
           <div class="table-wrap">
@@ -1790,6 +1820,166 @@ function showAlert(msg, type='success', duration=3500){
 //  STUDENTS
 // ══════════════════════════════════════════
 
+
+// ── Edit Student Name ─────────────────────────────────────────────────────────
+function openEditStudent(id){
+  const s = DB.students.find(s => s.id === id);
+  if(!s) return;
+  document.getElementById('edit-student-id').value    = id;
+  document.getElementById('edit-student-fname').value = s.fname;
+  document.getElementById('edit-student-lname').value = s.lname;
+  document.getElementById('edit-student-cls-label').textContent = s.cls;
+  document.getElementById('edit-student-id-label').textContent  = id;
+  const modal = document.getElementById('edit-student-modal');
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('edit-student-fname').focus(), 100);
+}
+
+function closeEditStudent(){
+  document.getElementById('edit-student-modal').style.display = 'none';
+}
+
+async function saveEditStudent(){
+  const id    = parseInt(document.getElementById('edit-student-id').value);
+  const fname = document.getElementById('edit-student-fname').value.trim().toUpperCase();
+  const lname = document.getElementById('edit-student-lname').value.trim().toUpperCase();
+  if(!fname || !lname){ showAlert('Both first and last name are required.','warning'); return; }
+  try {
+    await sbUpdate('students', id, {fname, lname});
+    // Update local cache
+    const s = CACHE.students.find(s => s.id === id);
+    if(s){ s.fname = fname; s.lname = lname; }
+    closeEditStudent();
+    showAlert(`✅ Name updated to ${fname} ${lname}. Scores remain linked.`, 'success');
+    renderStudentsTable();
+    renderDashboard();
+  } catch(err){
+    showAlert('Failed to update name: ' + err.message, 'danger');
+  }
+}
+
+// Close modal on backdrop click
+document.getElementById('edit-student-modal')?.addEventListener('click', function(e){
+  if(e.target === this) closeEditStudent();
+});
+
+
+// ══════════════════════════════════════════════════════════════
+//  MERGE DUPLICATE STUDENTS
+// ══════════════════════════════════════════════════════════════
+
+function tokenSort(fn, ln){ return (fn+' '+ln).toUpperCase().split(/\s+/).sort().join(' '); }
+
+function findDuplicatePairs(){
+  const campus = ACTIVE_CAMPUS;
+  const students = DB.students.filter(s => (s.campus||'kawoko') === campus);
+  const groups = {};
+  students.forEach(s => {
+    const key = tokenSort(s.fname, s.lname) + '|' + s.cls;
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(s);
+  });
+  // Return groups with 2+ members (duplicates)
+  return Object.values(groups).filter(g => g.length > 1);
+}
+
+function checkAndShowMergeAlert(){
+  const pairs = findDuplicatePairs();
+  const bar = document.getElementById('merge-alert-bar');
+  if(!bar) return;
+  if(pairs.length > 0){
+    document.getElementById('merge-dup-count').textContent = pairs.reduce((a,g)=>a+g.length-1,0);
+    bar.style.display = 'flex';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function openMergeTool(){
+  const pairs = findDuplicatePairs();
+  const list  = document.getElementById('merge-pairs-list');
+  if(!pairs.length){
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted)">✅ No duplicates found</div>';
+  } else {
+    list.innerHTML = pairs.map((group, gi) => {
+      const scoresSummary = s => {
+        const sc = CACHE.scores[s.id] || {};
+        const termCount = Object.keys(sc).length;
+        const totalScores = Object.values(sc).reduce((a,t)=>a+Object.keys(t).length,0);
+        return termCount > 0 ? `<span style="color:var(--green);font-weight:600">${totalScores} scores (${termCount} term${termCount>1?'s':''})</span>` : `<span style="color:var(--text-light)">No scores</span>`;
+      };
+      return `<div style="background:var(--gray-50);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:10px">DUPLICATE GROUP ${gi+1} — Class ${group[0].cls}</div>
+        <div style="display:grid;gap:8px">
+          ${group.map(s => `
+            <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:200px">
+                <div style="font-weight:700;font-size:14px">${s.fname} ${s.lname}</div>
+                <div style="font-size:12px;color:var(--text-muted)">ID: ${s.id} &nbsp;|&nbsp; ${scoresSummary(s)}</div>
+              </div>
+              <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="mergeKeep(${s.id}, [${group.filter(x=>x.id!==s.id).map(x=>x.id).join(',')}])">
+                ✅ Keep this name
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('merge-modal').style.display = 'flex';
+}
+
+function closeMergeTool(){
+  document.getElementById('merge-modal').style.display = 'none';
+}
+
+async function mergeKeep(keepId, deleteIds){
+  if(!deleteIds.length) return;
+  const keepStudent = DB.students.find(s => s.id === keepId);
+  if(!deleteIds.every(id => confirm(`Merge ID ${id} into "${keepStudent.fname} ${keepStudent.lname}" and delete the duplicate?`))) return;
+
+  try {
+    for(const delId of deleteIds){
+      // Re-assign all scores from delId → keepId in Supabase
+      const delScores = CACHE.scores[delId] || {};
+      const scoreRows = [];
+      Object.entries(delScores).forEach(([termYear, subjects]) => {
+        const [term, year] = termYear.split('|');
+        Object.entries(subjects).forEach(([subject, score]) => {
+          scoreRows.push({student_id: keepId, term, year, subject, score});
+        });
+      });
+      if(scoreRows.length > 0){
+        for(const batch of chunkArray(scoreRows, 100)){
+          await sbUpsert('scores', batch, 'student_id,term,year,subject');
+        }
+        // Merge into keep cache
+        if(!CACHE.scores[keepId]) CACHE.scores[keepId] = {};
+        Object.entries(delScores).forEach(([k, v]) => {
+          if(!CACHE.scores[keepId][k]) CACHE.scores[keepId][k] = {};
+          Object.assign(CACHE.scores[keepId][k], v);
+        });
+      }
+      // Delete the duplicate student (scores are now re-assigned or duplicated — delete old)
+      await sbDelete('students', delId);
+      CACHE.students = CACHE.students.filter(s => s.id !== delId);
+      delete CACHE.scores[delId];
+    }
+    showAlert(`✅ Merged successfully. Kept "${keepStudent.fname} ${keepStudent.lname}".`, 'success');
+    closeMergeTool();
+    renderStudentsTable();
+    renderDashboard();
+    checkAndShowMergeAlert();
+  } catch(err){
+    showAlert('Merge failed: ' + err.message, 'danger');
+  }
+}
+
+// Close merge modal on backdrop click
+document.getElementById('merge-modal')?.addEventListener('click', function(e){
+  if(e.target === this) closeMergeTool();
+});
+
 async function deleteStudent(id){
   if(!confirm('Delete this student? This will also remove all their scores.')) return;
   try {
@@ -1843,11 +2033,13 @@ function renderStudentsTable(){
         <div class="flex gap-10 items-center">
           <button class="btn btn-xs" onclick="openScoresFor(${s.id})">Scores</button>
           <button class="btn btn-xs btn-primary" onclick="openReportFor(${s.id})">Report</button>
+          <button class="btn btn-xs" style="background:var(--gray-100);color:var(--navy);border:1px solid var(--border)" onclick="openEditStudent(${s.id})">✏ Edit</button>
           ${isAdmin() ? `<button class="btn btn-xs btn-danger" onclick="deleteStudent(${s.id})">Del</button>` : ''}
         </div>
       </td>
     </tr>`;
   }).join('');
+  checkAndShowMergeAlert();
 }
 
 // ══════════════════════════════════════════
@@ -2373,7 +2565,55 @@ function openPrintBlob(title, bodyHtml){
 <head><meta charset="UTF-8"><title>${title}</title>
 <style>${REPORT_PRINT_CSS}</style>
 <script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script>
-</head><body>${bodyHtml}</body></html>`;
+</head><body>${bodyHtml}
+<!-- ── Edit Student Modal ─────────────────────────────────────────────────── -->
+<div id="edit-student-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--white);border-radius:var(--radius-lg);padding:28px 32px;width:460px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:700;color:var(--navy)">✏ Edit Student Name</div>
+      <button onclick="closeEditStudent()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">×</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;background:var(--gray-50);padding:10px 14px;border-radius:var(--radius);border-left:3px solid var(--gold)">
+      💡 Editing the name here will update all linked scores automatically. Use this to fix name order mismatches (e.g. <em>WITNEY ALO MBAGA → MBAGA WITNEY ALO</em>).
+    </div>
+    <input type="hidden" id="edit-student-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--navy);display:block;margin-bottom:4px">FIRST NAME</label>
+        <input id="edit-student-fname" type="text" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:var(--font);box-sizing:border-box;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--navy);display:block;margin-bottom:4px">LAST NAME</label>
+        <input id="edit-student-lname" type="text" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:var(--font);box-sizing:border-box;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">
+      Class: <strong id="edit-student-cls-label"></strong> &nbsp;|&nbsp; ID: <strong id="edit-student-id-label"></strong>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="closeEditStudent()" class="btn">Cancel</button>
+      <button onclick="saveEditStudent()" class="btn btn-primary">💾 Save Name</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Merge Duplicates Modal ─────────────────────────────────────────────── -->
+<div id="merge-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto">
+  <div style="background:var(--white);border-radius:var(--radius-lg);padding:28px 32px;width:700px;max-width:98vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-size:17px;font-weight:700;color:var(--navy)">🔀 Merge Duplicate Students</div>
+      <button onclick="closeMergeTool()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted)">×</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">
+      These students appear to be duplicates based on similar names in the same class. Select which name to <strong>keep</strong> — the other record's scores will be merged in and the duplicate deleted.
+    </div>
+    <div id="merge-pairs-list"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px">
+      <button onclick="closeMergeTool()" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+</body></html>`;
   const blob = new Blob([fullHtml], {type:'text/html'});
   const url  = URL.createObjectURL(blob);
   const tab  = window.open(url, '_blank');
@@ -2467,9 +2707,21 @@ function renderDashboard(){
   document.getElementById('stat-students').textContent = total;
   document.getElementById('stat-classes').textContent = classes.length;
   document.getElementById('stat-classes-sub').textContent = classes.join(', ');
+  const dashTerm = document.getElementById('dash-term')?.value || 'midterm1';
+  const dashYear = document.getElementById('dash-year')?.value || '2026';
+  const DASH_TERM_LABELS = {bot1:'BOT Term 1',bot2:'BOT Term 2',bot3:'BOT Term 3',midterm1:'Midterm Term 1',midterm2:'Midterm Term 2',midterm3:'Midterm Term 3',end1:'End of Term 1',end2:'End of Term 2',end3:'End of Term 3'};
+  const dashTermLabel = DASH_TERM_LABELS[dashTerm] || dashTerm;
+  const dashStatSub = document.querySelector('#stat-div1')?.closest('.stat-card')?.querySelector('.stat-sub');
+  if(dashStatSub) dashStatSub.textContent = dashTermLabel + ' averages';
+  const dashScoredSub = document.querySelector('#stat-scored')?.closest('.stat-card')?.querySelector('.stat-sub');
+  if(dashScoredSub) dashScoredSub.textContent = dashTermLabel + ' · ' + dashYear;
+  const topSubEl = document.getElementById('dash-top-sub');
+  if(topSubEl) topSubEl.textContent = dashTermLabel + ' · all classes';
+  const divSubEl = document.getElementById('dash-div-sub');
+  if(divSubEl) divSubEl.textContent = 'All students · ' + dashTermLabel;
   let div1 = 0, scored = 0;
   campusStudents.forEach(s => {
-    const sum = calcStudentSummary(s.id, 'midterm');
+    const sum = calcStudentSummaryForYear(s.id, dashTerm, dashYear);
     if(sum && sum.count > 0){ scored++; if(sum.div === 1) div1++; }
   });
   document.getElementById('stat-div1').textContent = div1;
@@ -2478,7 +2730,7 @@ function renderDashboard(){
   cgrid.innerHTML = classes.sort().map(cls => {
     const studs = campusStudents.filter(s => s.cls === cls);
     const divCounts = {1:0,2:0,3:0,4:0,5:0};
-    studs.forEach(s => { const sum = calcStudentSummary(s.id,'midterm'); if(sum&&sum.div) divCounts[sum.div]++; });
+    studs.forEach(s => { const sum = calcStudentSummaryForYear(s.id,dashTerm,dashYear); if(sum&&sum.div) divCounts[sum.div]++; });
     return `<div class="class-card">
       <div class="class-card-name">${cls}</div>
       <div class="class-card-count">${studs.length} students · ${CLASSES_CONFIG[cls]?.label||cls}</div>
@@ -2490,7 +2742,7 @@ function renderDashboard(){
   }).join('') || '<div style="grid-column:1/-1;color:var(--text-muted);padding:20px">No students yet — upload an assessment file under Import Scores.</div>';
 
   const tops = campusStudents.map(s => {
-    const sum = calcStudentSummary(s.id,'midterm');
+    const sum = calcStudentSummaryForYear(s.id,dashTerm,dashYear);
     return {s, sum};
   }).filter(x => x.sum && x.sum.count > 0).sort((a,b) => b.sum.total - a.sum.total).slice(0,8);
 
@@ -2509,7 +2761,7 @@ function renderDashboard(){
   `).join('') : '<div class="empty-state" style="padding:20px"><div class="empty-text">No scores entered yet</div></div>';
 
   const divCounts = {1:0,2:0,3:0,4:0};
-  campusStudents.forEach(s => { const sum = calcStudentSummary(s.id,'midterm'); if(sum&&sum.div&&sum.div<=4) divCounts[sum.div]++; });
+  campusStudents.forEach(s => { const sum = calcStudentSummaryForYear(s.id,dashTerm,dashYear); if(sum&&sum.div&&sum.div<=4) divCounts[sum.div]++; });
   const total2 = Object.values(divCounts).reduce((a,b)=>a+b,0);
   document.getElementById('division-breakdown').innerHTML = [1,2,3,4].map(d => {
     const pct = total2 > 0 ? Math.round(divCounts[d]/total2*100) : 0;
@@ -2999,15 +3251,44 @@ function impParseSheet(rows){
 
 function impBuildPreview(){
   const term = document.getElementById('imp-term').value;
-  const termLabel = {midterm:'Midterm',bot:'BOT',end:'End of Term'}[term];
+  const IMP_PREVIEW_LABELS = {bot1:'BOT Term 1',bot2:'BOT Term 2',bot3:'BOT Term 3',midterm1:'Midterm Term 1',midterm2:'Midterm Term 2',midterm3:'Midterm Term 3',end1:'End of Term 1',end2:'End of Term 2',end3:'End of Term 3',bot:'BOT',midterm:'Midterm',end:'End of Term'};
+  const termLabel = IMP_PREVIEW_LABELS[term] || term;
   const area = document.getElementById('imp-preview-area');
+
+  // ── Duplicate / similar-name detection helper ──────────────────────────────
+  // Normalise a full name: sort tokens alphabetically so "WITNEY ALO MBAGA" 
+  // and "MBAGA WITNEY ALO" produce the same key
+  function normName(fn, ln){ return [fn, ln].join(' ').toUpperCase().split(/\s+/).sort().join(' '); }
+  // Build lookup of existing students by normalised name+class
+  const existingNormMap = {};
+  DB.students.forEach(e => {
+    const nk = normName(e.fname, e.lname) + '|' + e.cls;
+    if(!existingNormMap[nk]) existingNormMap[nk] = [];
+    existingNormMap[nk].push(e);
+  });
+
+  let totalDups = 0;
   let html = `<div class="section-title-text" style="margin-bottom:12px">PREVIEW — ${impParsedClasses.length} class${impParsedClasses.length>1?'es':''} detected · ${termLabel}</div>`;
+  // Collect all duplicate warnings across classes
+  const dupWarnings = [];
+
   impParsedClasses.forEach(cls => {
-    let newCount = 0, updateCount = 0;
+    let newCount = 0, updateCount = 0, dupCount = 0;
     cls.students.forEach(s => {
-      const existing = DB.students.find(e => e.cls === cls.cls && e.lname === s.lname && e.fname === s.fname);
-      if(existing) updateCount++;
-      else newCount++;
+      const exactMatch = DB.students.find(e => e.cls === cls.cls && e.lname === s.lname && e.fname === s.fname);
+      if(exactMatch){ updateCount++; return; }
+      // Check for same-class name-reorder duplicate
+      const nk = normName(s.fname, s.lname) + '|' + cls.cls;
+      if(existingNormMap[nk]){
+        dupCount++; totalDups++;
+        const existing = existingNormMap[nk][0];
+        dupWarnings.push({
+          inFile: s.fname + ' ' + s.lname,
+          inSystem: existing.fname + ' ' + existing.lname,
+          cls: cls.cls,
+          existingId: existing.id,
+        });
+      } else { newCount++; }
     });
     html += `
     <div class="card" style="margin-bottom:14px;padding:0">
@@ -3018,6 +3299,7 @@ function impBuildPreview(){
         <span style="margin-left:auto;display:flex;gap:6px">
           ${newCount > 0 ? `<span class="badge badge-d1">+${newCount} new</span>` : ''}
           ${updateCount > 0 ? `<span class="badge badge-d2">↻ ${updateCount} update</span>` : ''}
+          ${dupCount > 0 ? `<span class="badge" style="background:#f59e0b;color:#fff">⚠ ${dupCount} name mismatch</span>` : ''}
         </span>
       </div>
       <div class="table-wrap">
@@ -3048,6 +3330,31 @@ function impBuildPreview(){
       </div>
     </div>`;
   });
+  // ── Duplicate warning banner ───────────────────────────────────────────────
+  if(dupWarnings.length > 0){
+    let warnHtml = `<div style="background:#fffbeb;border:1.5px solid #f59e0b;border-radius:var(--radius);padding:14px 18px;margin-bottom:16px">
+      <div style="font-weight:700;color:#b45309;margin-bottom:8px">⚠ ${dupWarnings.length} possible duplicate student${dupWarnings.length>1?'s':''} detected</div>
+      <div style="font-size:12px;color:#78350f;margin-bottom:10px">These names in your Excel file appear to already exist in the system under a different name order. The system will link scores to the existing student automatically — but you should verify and fix the name in the system if needed.</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr>
+          <th style="text-align:left;padding:5px 8px;border-bottom:1px solid #fcd34d;color:#92400e">In Excel file</th>
+          <th style="text-align:left;padding:5px 8px;border-bottom:1px solid #fcd34d;color:#92400e">In system</th>
+          <th style="text-align:left;padding:5px 8px;border-bottom:1px solid #fcd34d;color:#92400e">Class</th>
+          <th style="text-align:left;padding:5px 8px;border-bottom:1px solid #fcd34d;color:#92400e">Action</th>
+        </tr></thead>
+        <tbody>
+          ${dupWarnings.map(d => `<tr>
+            <td style="padding:5px 8px;color:#b45309;font-weight:600">${d.inFile}</td>
+            <td style="padding:5px 8px">${d.inSystem}</td>
+            <td style="padding:5px 8px"><span class="badge badge-navy">${d.cls}</span></td>
+            <td style="padding:5px 8px"><button class="btn" style="font-size:11px;padding:3px 10px" onclick="openEditStudent(${d.existingId})">✏ Fix Name</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+    html = warnHtml + html;
+  }
+
   area.innerHTML = html;
   document.getElementById('imp-actions').style.display = 'flex';
 }
@@ -3072,9 +3379,13 @@ async function impConfirm(){
     const freshStudents = await sbGet('students', 'order=id');
     CACHE.students = freshStudents || [];
     const lookup = {};
+    const lookupNorm = {}; // normalised name (order-insensitive) fallback
+    function normNameImp(fn, ln){ return [fn,ln].join(' ').toUpperCase().split(/\s+/).sort().join(' '); }
     CACHE.students.forEach(st => {
       const key = `${st.fname.trim().toUpperCase()}|${st.lname.trim().toUpperCase()}|${st.cls}|${st.campus||'kawoko'}`;
       lookup[key] = st;
+      const nk = normNameImp(st.fname.trim(), st.lname.trim()) + '|' + st.cls + '|' + (st.campus||'kawoko');
+      if(!lookupNorm[nk]) lookupNorm[nk] = st; // first match wins
     });
     for(const cls of impParsedClasses){
       const clsTeacher = teacherOverride || getTeacherForClassCampus(cls.cls) || '';
@@ -3107,7 +3418,8 @@ async function impConfirm(){
       const scoreRows = [];
       for(const s of toScore){
         const key = `${s.fname}|${s.lname}|${cls.cls}|${campus}`;
-        const student = lookup[key];
+        const nkImp = normNameImp(s.fname, s.lname) + '|' + cls.cls + '|' + campus;
+        const student = lookup[key] || lookupNorm[nkImp]; // fallback: match by sorted tokens
         if(!student){ continue; }
         if(!lookup[key+'__counted']){ clsUpd++; totalUpd++; lookup[key+'__counted'] = true; }
         Object.entries(s.scores).forEach(([subject, score]) => {
@@ -3145,10 +3457,20 @@ async function impConfirm(){
   }
   showAlert(`✅ Import complete: ${totalNew} new students, ${totalUpd} score records saved (${termLabel}).`);
   CACHE.students = await sbGet('students','order=lname');
+  // Reload ALL scores into cache so pages reflect the new data immediately
+  const freshScores = await sbGet('scores','select=student_id,term,year,subject,score');
+  CACHE.scores = {};
+  (freshScores || []).forEach(r => {
+    if(!CACHE.scores[r.student_id]) CACHE.scores[r.student_id] = {};
+    const k = r.term + '|' + r.year;
+    if(!CACHE.scores[r.student_id][k]) CACHE.scores[r.student_id][k] = {};
+    CACHE.scores[r.student_id][k][r.subject] = r.score;
+  });
   populateScoreStudentDropdown();
   populateReportDropdown();
   renderDashboard();
   renderImportLog();
+  renderScoresPage();
 }
 
 // ══════════════════════════════════════════
