@@ -542,7 +542,7 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
           <button class="campus-btn active" id="btn-campus-kawoko" onclick="switchCampus('kawoko')">🏫 Kawoko</button>
           <button class="campus-btn" id="btn-campus-ndejje" onclick="switchCampus('ndejje')">🏫 Ndejje</button>
         </div>
-        <button class="btn btn-sm" onclick="openModal('modal-import')">📥 Import Excel</button>
+        <button class="btn btn-sm" id="btn-import-excel" onclick="openModal('modal-import')">📥 Import Excel</button>
       </div>
     </div>
 
@@ -1403,9 +1403,12 @@ function canDataEntry(){ return isAdmin() || isDataEntry(); }
 
 function applyRoleUI(){
   const role = getRole();
+  // Hide Import Excel topbar button for non-admin roles
+  const importBtn = document.getElementById('btn-import-excel');
+  if(importBtn) importBtn.style.display = (role === 'admin') ? '' : 'none';
   const navAccess = {
     'nav-classes':    ['admin'],
-    'nav-import':     ['admin','dataentry'],
+    'nav-import':     ['admin'],
     'nav-promotions': ['admin'],
     'nav-settings':   ['admin'],
     'nav-users':      ['admin'],
@@ -1424,8 +1427,7 @@ function applyRoleUI(){
       }
     }
   });
-  const importBtn = document.querySelector('.topbar-actions .btn-sm');
-  if(importBtn) importBtn.style.display = canDataEntry() ? '' : 'none';
+  // Import button visibility handled above via btn-import-excel id
   const lbl = document.getElementById('sidebar-user-email');
   if(lbl && SESSION){
     const roleLabels = {admin:'Admin', headteacher:'Head Teacher', teacher:'Teacher', dataentry:'Data Entry'};
