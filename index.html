@@ -2436,9 +2436,10 @@ function buildReportHTML(studentId, term, year){
     const hasScore = combinedScore !== null;
     const g = hasScore ? getGrade(combinedScore) : null;
     const isGraded = gradedSubs.map(s=>s.toLowerCase()).includes(sub.toLowerCase());
-    if(hasScore){ total += combinedScore; if(isGraded){ aggTotal += getAgg(g.grade); scoredCount++; } }
+    if(hasScore && isGraded){ total += combinedScore; aggTotal += getAgg(g.grade); scoredCount++; }
     return { sub, score: combinedScore, rawMT: scMid[sub]||null, rawEOT: scEnd[sub]||null,
-             displayMT, displayEOT, grade: g?.grade||null, comment: g?.comment||null };
+             displayMT, displayEOT, grade: g?.grade||null, comment: g?.comment||null,
+             isGraded };
   });
   const div = scoredCount > 0 ? getDivision(aggTotal, scoredCount) : null;
   const summary = { total, aggTotal, count: scoredCount, div, subResults };
@@ -2456,7 +2457,7 @@ function buildReportHTML(studentId, term, year){
   const campusPhone2 = getCampusPhone2()  || S.phone2 || S.phone || '';
   const headTeacher  = getHeadTeacher()   || '—';
   const classTeacher = getTeacherForClassCampus(student.cls) || student.teacher || '—';
-  const totalAgg     = summary.subResults.filter(r => r.score !== null).reduce((a, r) => a + getAgg(r.grade), 0);
+  const totalAgg     = summary.subResults.filter(r => r.score !== null && r.isGraded).reduce((a, r) => a + getAgg(r.grade), 0);
   const teacherComment = div===1?'Excellent work, keep aiming higher!':div===2?'Good work, keep working hard.':div===3?'Promising results, aim higher next term.':div===4?'Needs more effort; please study harder.':'Requires serious attention and support.';
   const headComment    = "Promising results, don't relax next term.";
 
@@ -2491,7 +2492,10 @@ function buildReportHTML(studentId, term, year){
   // Body rows
   const bodyRows = summary.subResults.map(r => {
     const botVal = scBot[r.sub];
-    let cols = `<td>${r.sub}</td>`;
+    const isGradedRow = gradedSubs.map(s=>s.toLowerCase()).includes(r.sub.toLowerCase());
+    let cols = isGradedRow
+      ? `<td style="font-weight:600">${r.sub}</td>`
+      : `<td style="color:#718096;font-style:italic">${r.sub} <span style="font-size:10px;color:#a0aec0">(not counted)</span></td>`;
     if(isMid) cols += `<td style="text-align:center">${fmtRef(botVal)}</td>`;     if(isEnd) cols += `<td style="text-align:center;color:#718096;font-size:12px">100</td>`;
     if(isEnd)          cols += `<td style="text-align:center">${r.displayMT !== null ? `<strong>${r.displayMT}</strong>` : fmtRef(null)}</td>`;
     if(isMid)          cols += `<td style="text-align:center">${r.displayMT !== null ? `<strong>${r.displayMT}</strong>` : fmtRef(null)}</td>`;
@@ -2509,12 +2513,13 @@ function buildReportHTML(studentId, term, year){
   // primary score col: 1 always
   const footerEmptyCols = refCols; // these are blank in footer
 
+  const gradedCount  = summary.subResults.filter(r => r.isGraded && r.score !== null).length;
   const footerRow = `<tr>
     <td><strong>TOTAL</strong></td>
     ${footerEmptyCols > 0 ? `<td colspan="${footerEmptyCols}"></td>` : ''}
     <td></td>
     <td style="text-align:center"><strong>${summary.count>0 ? summary.total : '—'}</strong></td>
-    <td style="text-align:center"><strong>${totalAgg||'—'}</strong></td>
+    <td style="text-align:center"><strong>${totalAgg > 0 ? totalAgg : '—'}</strong></td>
     <td>${div ? (div === 'U' ? 'Ungraded (U)' : `Division ${div}`) : '—'}</td>
     <td></td>
   </tr>`;
@@ -2991,6 +2996,12 @@ window.onload = async function(){
   const scTerm    = document.getElementById('sc-term');
   if(scStudent) scStudent.addEventListener('change', loadScoreFields);
   if(scTerm)    scTerm.addEventListener('change', loadScoreFields);
+
+  // Tab switching — use addEventListener to avoid onclick parsing issues
+  const _ts = document.getElementById('tab-staff');
+  const _ta = document.getElementById('tab-admin');
+  if(_ts) _ts.addEventListener('click', function(e){ e.preventDefault(); switchLoginTab('staff'); });
+  if(_ta) _ta.addEventListener('click', function(e){ e.preventDefault(); switchLoginTab('admin'); });
 };
 
 // ══════════════════════════════════════════
@@ -3003,7 +3014,6 @@ function getClassDef(clsName){
 }
 
 function getGradedSubjects(clsName){
-  // Only these subjects count towards aggregate and division
   const cls = (clsName || '').toUpperCase();
   const num = parseInt(cls.replace(/[^0-9]/g,'')) || 0;
   if(cls.startsWith('JY') && num >= 1 && num <= 3){
@@ -3012,11 +3022,9 @@ function getGradedSubjects(clsName){
   if(cls.startsWith('JY') && num >= 4 && num <= 7){
     return ['English', 'Mathematics', 'Science', 'Social Studies'];
   }
-  // KY classes — use English and Mathematics only
   if(cls.startsWith('KY')){
     return ['English', 'Mathematics'];
   }
-  // Default fallback
   return ['English', 'Mathematics', 'Science', 'Social Studies'];
 }
 
