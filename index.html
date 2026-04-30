@@ -2436,7 +2436,7 @@ function buildReportHTML(studentId, term, year){
     const hasScore = combinedScore !== null;
     const g = hasScore ? getGrade(combinedScore) : null;
     const isGraded = gradedSubs.map(s=>s.toLowerCase()).includes(sub.toLowerCase());
-    if(hasScore && isGraded){ total += combinedScore; aggTotal += getAgg(g.grade); scoredCount++; }
+    if(hasScore){ total += combinedScore; if(isGraded){ aggTotal += getAgg(g.grade); scoredCount++; } }
     return { sub, score: combinedScore, rawMT: scMid[sub]||null, rawEOT: scEnd[sub]||null,
              displayMT, displayEOT, grade: g?.grade||null, comment: g?.comment||null };
   });
@@ -2491,24 +2491,7 @@ function buildReportHTML(studentId, term, year){
   // Body rows
   const bodyRows = summary.subResults.map(r => {
     const botVal = scBot[r.sub];
-    const isGraded = gradedSubs.map(s=>s.toLowerCase()).includes(r.sub.toLowerCase());
-    // Non-graded subjects shown in a lighter style
-    const rowStyle = isGraded ? '' : 'style="opacity:0.7;background:#fafafa"';
-    const subLabel = isGraded
-      ? `<td style="font-weight:600">${r.sub}</td>`
-      : `<td style="color:#718096;font-style:italic">${r.sub} <span style="font-size:10px;color:#a0aec0">(not counted)</span></td>`;
-    let cols = subLabel;
-    if(isMid) cols += `<td style="text-align:center">${fmtRef(botVal)}</td>`;
-    if(isEnd) cols += `<td style="text-align:center;color:#718096;font-size:12px">100</td>`;
-    if(isEnd)          cols += `<td style="text-align:center">${r.displayMT !== null ? `<strong>${r.displayMT}</strong>` : fmtRef(null)}</td>`;
-    if(isMid)          cols += `<td style="text-align:center">${r.displayMT !== null ? `<strong>${r.displayMT}</strong>` : fmtRef(null)}</td>`;
-    if(isBot)          cols += `<td style="text-align:center">${r.score !== null ? `<strong>${r.score}</strong>` : '—'}</td>`;
-    if(isEnd)          cols += `<td style="text-align:center">${r.displayEOT !== null ? `<strong>${r.displayEOT}</strong>` : fmtRef(null)}</td>`;
-    cols += `<td style="text-align:center;font-weight:700">${r.score !== null ? r.score : '—'}</td>`;
-    cols += `<td style="text-align:center">${r.grade || '—'}</td>`;
-    cols += `<td>${r.comment || '—'}</td>`;
-    return `<tr ${rowStyle}>${cols}</tr>`;
-  }).join('');
+    let cols = `<td>${r.sub}</td>`;
     if(isMid) cols += `<td style="text-align:center">${fmtRef(botVal)}</td>`;     if(isEnd) cols += `<td style="text-align:center;color:#718096;font-size:12px">100</td>`;
     if(isEnd)          cols += `<td style="text-align:center">${r.displayMT !== null ? `<strong>${r.displayMT}</strong>` : fmtRef(null)}</td>`;
     if(isMid)          cols += `<td style="text-align:center">${r.displayMT !== null ? `<strong>${r.displayMT}</strong>` : fmtRef(null)}</td>`;
@@ -3020,19 +3003,20 @@ function getClassDef(clsName){
 }
 
 function getGradedSubjects(clsName){
+  // Only these subjects count towards aggregate and division
   const cls = (clsName || '').toUpperCase();
   const num = parseInt(cls.replace(/[^0-9]/g,'')) || 0;
   if(cls.startsWith('JY') && num >= 1 && num <= 3){
-    // JY1–JY3: only these 4 core subjects count for total & division
     return ['English', 'Mathematics', 'Literacy 1A', 'Reading'];
   }
   if(cls.startsWith('JY') && num >= 4 && num <= 7){
-    // JY4–JY7: only these 4 core subjects count for total & division
     return ['English', 'Mathematics', 'Science', 'Social Studies'];
   }
+  // KY classes — use English and Mathematics only
   if(cls.startsWith('KY')){
     return ['English', 'Mathematics'];
   }
+  // Default fallback
   return ['English', 'Mathematics', 'Science', 'Social Studies'];
 }
 
@@ -3747,21 +3731,12 @@ function renderImportLog(){
 
 function switchLoginTab(tab){
   const isStaff = tab === 'staff';
-  const staffForm = document.getElementById('login-staff-form');
-  const adminForm = document.getElementById('login-admin-form');
-  const tabStaff  = document.getElementById('tab-staff');
-  const tabAdmin  = document.getElementById('tab-admin');
-  if(staffForm) staffForm.style.display = isStaff ? 'block' : 'none';
-  if(adminForm) adminForm.style.display = isStaff ? 'none' : 'block';
-  if(tabStaff){
-    tabStaff.style.background = isStaff ? 'var(--navy)' : 'var(--white)';
-    tabStaff.style.color      = isStaff ? 'var(--white)' : 'var(--text-muted)';
-  }
-  if(tabAdmin){
-    tabAdmin.style.background = isStaff ? 'var(--white)' : 'var(--navy)';
-    tabAdmin.style.color      = isStaff ? 'var(--text-muted)' : 'var(--white)';
-  }
-  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('login-staff-form').style.display = isStaff ? '' : 'none';
+  document.getElementById('login-admin-form').style.display = isStaff ? 'none' : '';
+  document.getElementById('tab-staff').style.background = isStaff ? 'var(--navy)' : 'var(--white)';
+  document.getElementById('tab-staff').style.color = isStaff ? 'var(--white)' : 'var(--text-muted)';
+  document.getElementById('tab-admin').style.background = isStaff ? 'var(--white)' : 'var(--navy)';
+  document.getElementById('tab-admin').style.color = isStaff ? 'var(--text-muted)' : 'var(--white)';
 }
 
 async function hashPin(pin){
