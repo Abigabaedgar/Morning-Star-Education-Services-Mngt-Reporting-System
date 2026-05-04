@@ -1469,6 +1469,8 @@ function sbHeaders(extra={}){
     'apikey': SUPABASE_ANON,
     'Content-Type': 'application/json',
     'Prefer': 'return=representation',
+    'Content-Profile': 'school',
+    'Accept-Profile': 'school',
     ...extra
   };
   if(SB_TOKEN) h['Authorization'] = 'Bearer ' + SB_TOKEN;
@@ -3763,7 +3765,7 @@ async function doStaffLogin(){
   try {
     const pinHash = await hashPin(pin);
     const r = await fetch(`${SUPABASE_URL}/rest/v1/app_users?username=eq.${encodeURIComponent(username)}&active=eq.true&select=id,name,username,role,assigned_class,pin_hash`, {
-      headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON }
+      headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON, 'Content-Profile': 'school', 'Accept-Profile': 'school' }
     });
     const rows = await r.json();
     if(!rows.length || rows[0].pin_hash !== pinHash) throw new Error('Invalid username or PIN.');
@@ -4256,42 +4258,3 @@ function generateAllReports(){ printBulkReports(); }
 </div>
 </body>
 </html>`;
-
-function openPrintBlob(title, bodyHtml){
-  const fullHtml = `<!DOCTYPE html><html>
-<head><meta charset="UTF-8"><title>${title}</title>
-<style>${REPORT_PRINT_CSS}</style>
-<script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script>
-</head><body>${bodyHtml}</body></html>`;
-  const blob = new Blob([fullHtml], {type:'text/html'});
-  const url  = URL.createObjectURL(blob);
-  const tab  = window.open(url, '_blank');
-  if(!tab){ showAlert('Pop-up blocked. Please allow pop-ups for this site.','warning'); }
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
-}`;
-
-function openPrintBlob(title, bodyHtml){
-  const fullHtml = `<!DOCTYPE html><html>
-<head><meta charset="UTF-8"><title>${title}</title>
-<style>${REPORT_PRINT_CSS}</style>
-<script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script>
-</head><body>${bodyHtml}</body></html>`;
-  const blob = new Blob([fullHtml], {type:'text/html'});
-  const url  = URL.createObjectURL(blob);
-  const tab  = window.open(url, '_blank');
-  if(!tab){ showAlert('Pop-up blocked. Please allow pop-ups for this site.','warning'); }
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
-}`;
-
-function openPrintBlob(title, bodyHtml){
-  const fullHtml = `<!DOCTYPE html><html>
-<head><meta charset="UTF-8"><title>${title}</title>
-<style>${REPORT_PRINT_CSS}</style>
-<script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script>
-</head><body>${bodyHtml}</body></html>`;
-  const blob = new Blob([fullHtml], {type:'text/html'});
-  const url  = URL.createObjectURL(blob);
-  const tab  = window.open(url, '_blank');
-  if(!tab){ showAlert('Pop-up blocked. Please allow pop-ups for this site.','warning'); }
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
-}
